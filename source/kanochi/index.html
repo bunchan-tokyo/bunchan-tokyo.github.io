@@ -1,0 +1,2208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>完落ち — 取調室の刑事</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --wall:#c4c8c5; --wall2:#a7adaa; --ink:#1c2126; --muted:#4f585f;
+  --paper:#e7d7a9; --paper-ink:#3a2f17; --stamp:#b3261e; --lamp:rgba(255,242,205,.7);
+  --det:#26405c; --det-ink:#f3f5f7; --panel:#d9dcd9; --line:rgba(0,0,0,.18); --info:#2c5d8a; --hint:#2a557f;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --wall:#23292e; --wall2:#15191c; --ink:#e8eaeb; --muted:#9aa3a9;
+    --paper:#cfbd88; --paper-ink:#2c2411; --stamp:#e5493d; --lamp:rgba(255,236,180,.25);
+    --det:#2f4c6c; --det-ink:#f3f5f7; --panel:#1b2024; --line:rgba(255,255,255,.14); --info:#7db4e6; --hint:#2a557f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --wall:#23292e; --wall2:#15191c; --ink:#e8eaeb; --muted:#9aa3a9;
+  --paper:#cfbd88; --paper-ink:#2c2411; --stamp:#e5493d; --lamp:rgba(255,236,180,.25);
+  --det:#2f4c6c; --det-ink:#f3f5f7; --panel:#1b2024; --line:rgba(255,255,255,.14); --info:#7db4e6; --hint:#2a557f;
+  color-scheme: dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--wall2);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",sans-serif;font-size:15px;line-height:1.6}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--stamp);outline-offset:2px}
+.app{height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;background:linear-gradient(var(--wall),var(--wall2));position:relative;overflow:hidden}
+
+/* 上部 */
+.top{display:flex;align-items:center;gap:10px;padding:10px 14px 6px}
+.case{font-family:"Shippori Mincho B1",serif;font-weight:700;font-size:15px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snd{background:none;border:1px solid var(--line);border-radius:6px;font-size:12px;padding:1px 8px;color:var(--muted)}
+.clock{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted)}
+.clock b{color:var(--ink);font-size:16px}
+
+/* 容疑者 */
+.suspect{position:relative;height:244px;flex:none;display:flex;justify-content:center;overflow:hidden;background:radial-gradient(ellipse at 50% 15%,transparent 25%,rgba(0,0,0,.6) 85%),#121416}
+.fig{height:100%;position:relative;z-index:1;transform-origin:50% 100%;animation:breathe var(--br,4.6s) ease-in-out infinite;transition:translate .9s ease,rotate .9s ease}
+.fig svg{height:100%;display:block}
+@keyframes breathe{50%{transform:scale(1.012) translateY(-1px)}}
+.fig.zoom{animation:breathe var(--br,4.6s) ease-in-out infinite,zoomS .9s ease}
+@keyframes zoomS{0%{scale:1}14%{scale:1.13}72%{scale:1.13}100%{scale:1}}
+.flick{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+.suspect[data-heat="1"] .flick{animation:flick 5s infinite}
+.suspect[data-heat="2"] .flick{animation:flick 2.1s infinite}
+@keyframes flick{0%,100%{opacity:0}6%{opacity:.5}8%{opacity:.05}10%{opacity:.4}12%{opacity:0}55%{opacity:0}57%{opacity:.35}59%{opacity:0}}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6}
+.flash.on{animation:flash .55s ease-out}
+@keyframes flash{0%{opacity:.9}100%{opacity:0}}
+.nameplate{position:absolute;left:12px;top:8px;z-index:4;font-size:12px;color:#a9b0b5;line-height:1.4}
+.nameplate b{display:block;font-family:"Shippori Mincho B1",serif;font-size:17px;color:#eceeef}
+.status{position:absolute;right:10px;top:8px;z-index:4;width:134px;text-align:right}
+.gauge{font-size:10px;color:#a9b0b5;margin-top:5px}
+.gauge .bar{height:6px;background:rgba(255,255,255,.18);border-radius:3px;overflow:hidden;margin-top:3px}
+.gauge .fill{height:100%;width:10%;background:var(--stamp);transition:width .6s}
+
+/* 会話 */
+.log{flex:1;min-height:0;overflow-y:auto;padding:12px 14px 6px;display:flex;flex-direction:column;gap:10px}
+.say{max-width:86%;padding:8px 12px;border-radius:12px;white-space:pre-wrap}
+.say.sus{align-self:flex-start;font-family:"Shippori Mincho B1",serif;font-weight:500;font-size:16px;background:var(--panel);border-top-left-radius:3px}
+.say.det{align-self:flex-end;background:var(--det);color:var(--det-ink);border-top-right-radius:3px}
+.say.sys{align-self:center;font-size:12px;color:var(--muted);text-align:center;padding:2px 8px}
+.say.report{align-self:center;max-width:92%;background:var(--paper);color:var(--paper-ink);font-size:13px;border-radius:8px;padding:7px 12px;border-left:4px solid var(--info)}
+.say.wait{opacity:.6}
+.stampline{align-self:center;font-family:"Shippori Mincho B1",serif;font-weight:800;color:var(--stamp);border:3px solid var(--stamp);padding:2px 14px;font-size:22px;transform:rotate(-6deg);animation:stamp .35s cubic-bezier(.2,1.6,.4,1)}
+.stampline.small{font-size:15px;border-width:2px;padding:1px 10px}
+@keyframes stamp{from{transform:scale(2.4) rotate(-6deg);opacity:0}to{transform:scale(1) rotate(-6deg);opacity:1}}
+
+/* 証言メモ */
+.memo{flex:none;padding:6px 14px 4px;border-top:1px solid var(--line)}
+.memo h2{font-size:12px;font-weight:500;color:var(--muted);margin:0 0 4px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;min-height:34px}
+.chip{flex:none;border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 10px;font-size:13px;max-width:240px;text-align:left}
+.chip.broken{text-decoration:line-through;text-decoration-color:var(--stamp);color:var(--muted)}
+.chip.vague{border-style:dashed}
+.chip.pinned{border-color:var(--stamp)}
+.chip .tag{font-size:10px;margin-right:6px;padding:0 5px;border-radius:3px;border:1px solid currentColor;opacity:.75;white-space:nowrap}
+.chip.pinned .tag{color:var(--stamp);opacity:1}
+.chip .tag.chk{color:var(--info);opacity:1}
+.chips.picking .chip:not(.broken){border-color:var(--stamp);box-shadow:0 0 0 2px color-mix(in srgb,var(--stamp) 35%,transparent);animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--stamp) 15%,transparent)}}
+.empty{font-size:12px;color:var(--muted);align-self:center}
+
+/* 入力 */
+.ask{flex:none;padding:6px 10px 10px;display:flex;flex-direction:column;gap:6px}
+.hintbar{display:none;align-items:flex-start;gap:8px;font-size:13px;line-height:1.5;background:var(--hint);color:#fff;border-radius:10px;padding:8px 6px 8px 12px}
+.hintbar span{flex:1}
+.hintbar button{background:none;border:none;color:#fff;font-size:18px;line-height:1;padding:0 6px;opacity:.8}
+.quick{display:flex;gap:6px;overflow-x:auto;padding:2px 2px}
+.quick button{flex:none;max-width:270px;text-align:left;border:1px solid var(--line);background:transparent;border-radius:14px;padding:3px 11px;font-size:12px;line-height:1.4;color:var(--muted)}
+.quick button.wait{border-style:dashed;color:var(--ink)}
+.quick button.qpin{border-color:var(--stamp);color:var(--ink);background:color-mix(in srgb,var(--stamp) 12%,transparent)}
+.quick button:disabled{opacity:.5}
+.row{display:flex;gap:6px}
+.row input{flex:1;min-width:0;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit}
+.btn{border:none;border-radius:10px;padding:0 11px;font-weight:700;white-space:nowrap}
+.btn.send{background:var(--det);color:var(--det-ink)}
+.btn.ev{background:var(--paper);color:var(--paper-ink)}
+.btn.chk{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.45}
+.dot{display:none;width:8px;height:8px;border-radius:50%;background:var(--stamp);margin-left:4px;vertical-align:middle}
+.dot.on{display:inline-block}
+.glow{animation:glow 1.1s ease-in-out infinite;outline:2px solid var(--stamp);outline-offset:1px}
+@keyframes glow{50%{outline-color:transparent}}
+.pickbar{display:none;align-items:center;gap:8px;font-size:13px;background:var(--paper);color:var(--paper-ink);border-radius:10px;padding:8px 12px}
+.pickbar.on{display:flex}
+.pickbar span{flex:1}
+.pickbar button{background:none;border:1px solid var(--paper-ink);border-radius:6px;padding:2px 10px;color:var(--paper-ink)}
+.finalbtn{display:none;height:52px;border:none;border-radius:12px;background:var(--stamp);color:#fff;font-weight:700;font-size:16px}
+.finalbtn:disabled{opacity:.5}
+.ask.final .quick,.ask.final .row,.ask.final .pickbar,.ask.final .hintbar{display:none!important}
+.ask.final .finalbtn{display:block}
+
+/* シート（証拠・裏取り・筋書き） */
+.sheet{position:absolute;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:5}
+.sheet.on{display:flex}
+.folder{width:100%;max-height:82%;overflow-y:auto;background:var(--paper);color:var(--paper-ink);border-radius:14px 14px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+.folder h3{font-family:"Shippori Mincho B1",serif;margin:0 0 2px;font-size:18px}
+.folder p.hint{margin:0 0 10px;font-size:12px;opacity:.8}
+.ev-card{display:block;width:100%;text-align:left;background:rgba(255,255,255,.35);border:1px solid rgba(0,0,0,.15);border-radius:8px;padding:9px 11px;margin-bottom:8px;color:var(--paper-ink)}
+.ev-card:disabled{opacity:.55}
+.ev-card b{display:block;font-size:14px}
+.ev-card small{font-size:12.5px;line-height:1.5;display:block;opacity:.85}
+.ev-card .new{display:inline-block;margin-left:6px;font-size:10px;padding:0 6px;border-radius:3px;background:var(--stamp);color:#fff;vertical-align:middle}
+.asm h4{margin:12px 0 6px;font-size:14px;font-family:"Shippori Mincho B1",serif}
+.opt{display:block;width:100%;text-align:left;margin-bottom:6px;padding:8px 11px;border:1px solid rgba(0,0,0,.2);background:rgba(255,255,255,.3);border-radius:8px;color:var(--paper-ink);font-size:13.5px;line-height:1.5}
+.opt.sel{background:var(--paper-ink);color:var(--paper);border-color:var(--paper-ink)}
+.asm details{margin-top:12px;font-size:12.5px}
+.asm summary{cursor:pointer;font-weight:700}
+.asm details p{margin:6px 0;line-height:1.5}
+.asm .go{margin-top:12px;width:100%;height:46px;border:none;border-radius:10px;background:var(--stamp);color:#fff;font-weight:700;font-size:15px}
+.asm .go:disabled{opacity:.45}
+
+/* 表紙・結末 */
+.cover{position:absolute;inset:0;z-index:8;background:var(--wall2);display:flex;flex-direction:column;overflow-y:auto;padding:26px 22px}
+.cover.hide{display:none}
+.cover h1{font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:30px;line-height:1.3;margin:10px 0 4px}
+.cover .sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+.cover .brief{font-size:14.5px;line-height:1.8;flex:1}
+.cover .brief p{margin:0 0 10px}
+.cover .start{margin-top:16px;height:50px;font-size:16px;background:var(--stamp);color:#fff;border:none;border-radius:12px;font-weight:700;flex:none}
+.cover .back{margin-top:8px;height:40px;background:none;border:none;color:var(--muted);flex:none}
+.cover .confess{font-family:"Shippori Mincho B1",serif;font-size:17px;line-height:1.9;white-space:pre-wrap}
+.cover .rank{font-family:"Shippori Mincho B1",serif;font-size:22px;font-weight:800;margin:8px 0 0}
+.cases{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.case-card{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:12px 14px}
+.case-card b{display:block;font-family:"Shippori Mincho B1",serif;font-size:19px}
+.case-card span{display:block;font-size:13px;color:var(--muted);line-height:1.5}
+.note{font-size:12.5px;color:var(--muted)}
+
+
+/* 取調室の切り替え（複数犯） */
+.tabs{display:none;gap:6px;padding:0 14px 6px;overflow-x:auto}
+.tabs.on{display:flex}
+.tab{flex:none;border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 12px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.tab.cur{background:var(--ink);color:var(--wall);border-color:var(--ink)}
+.tab .m{display:inline-block;width:26px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.tab .m i{display:block;height:100%;background:var(--stamp)}
+.tab .x{font-size:10px;color:var(--stamp)}
+.tab:disabled{opacity:.5}
+.folder h4.sec{margin:14px 0 6px;font-size:13px}
+
+/* 会話は直近だけ表示（全部は「記録」で） */
+.say.old,.stampline.old{display:none}
+.say.sus{font-size:17px}
+
+/* 突きつけのカットイン */
+.cutin{position:absolute;inset:0;z-index:7;display:none;align-items:center;justify-content:center;overflow:hidden;background:rgba(10,8,6,.8)}
+.cutin.on{display:flex}
+.cutin .lines{position:absolute;left:-20%;top:-20%;width:140%;height:140%;animation:spin 5s linear infinite}
+.cutin .lines path{fill:#fff}
+.cutin.hit .lines path{fill:#ffd9d2}
+@keyframes spin{to{transform:rotate(10deg)}}
+.cutin .say{position:absolute;top:14%;left:0;right:0;text-align:center;font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:32px;line-height:1.3;color:#fff;text-shadow:0 3px 0 #b3261e,0 0 18px rgba(0,0,0,.9);padding:0 16px;animation:sayIn .3s cubic-bezier(.2,1.4,.4,1)}
+@keyframes sayIn{from{transform:translateX(-60%) skewX(-12deg);opacity:0}to{transform:none;opacity:1}}
+.cutin .item{width:150px;height:150px;background:#e7d7a9;border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;opacity:0}
+.cutin .item svg{width:112px;height:112px}
+.cutin .item.slam{animation:slam .38s cubic-bezier(.3,1.6,.5,1) forwards}
+@keyframes slam{0%{transform:scale(3.2) rotate(-18deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(-4deg);opacity:1}}
+.cutin .item.fizzle{animation:fizzle .6s ease forwards}
+@keyframes fizzle{0%{transform:rotate(-4deg);opacity:1}100%{transform:translateY(140px) rotate(28deg) scale(.7);opacity:0}}
+.cutin .item.deflect{animation:deflect .6s ease forwards}
+@keyframes deflect{0%{transform:rotate(-4deg);opacity:1}100%{transform:translateX(240px) rotate(32deg);opacity:0}}
+.cutin .bigwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.cutin .big{position:relative;white-space:nowrap;font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:92px;line-height:1.1;color:#e5493d;border:8px solid #e5493d;padding:0 20px;border-radius:8px;opacity:0;background:rgba(20,10,8,.35)}
+.cutin .big.on{animation:bigStamp .3s cubic-bezier(.2,1.7,.4,1) forwards}
+@keyframes bigStamp{from{transform:scale(3) rotate(-10deg);opacity:0}to{transform:scale(1) rotate(-10deg);opacity:1}}
+.cutin .sub{position:absolute;bottom:16%;left:0;right:0;text-align:center;font-family:"Shippori Mincho B1",serif;font-size:21px;color:#f2ede4;padding:0 18px;opacity:0}
+.cutin .sub.on{animation:fadeUp .3s ease forwards}
+@keyframes fadeUp{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.cutin .steam{animation:steam 1.1s ease-in-out infinite}
+@keyframes steam{50%{transform:translateY(-4px);opacity:.4}}
+.app.quake{animation:quake .45s}
+@keyframes quake{10%{transform:translate(-8px,4px)}25%{transform:translate(7px,-5px)}40%{transform:translate(-5px,3px)}60%{transform:translate(4px,-2px)}80%{transform:translate(-2px,1px)}}
+
+/* 証拠品 */
+.ev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ev-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px 8px;background:rgba(255,255,255,.42);border:1px solid rgba(0,0,0,.15);border-radius:10px;color:var(--paper-ink);font-size:11.5px;line-height:1.3;text-align:center;position:relative}
+.ev-tile svg{width:46px;height:46px}
+.ev-tile .new{position:absolute;top:4px;right:4px;font-size:9px;padding:0 5px;border-radius:3px;background:var(--stamp);color:#fff}
+.ev-tile.talk{background:rgba(255,248,230,.6)}
+.ev-back{background:none;border:none;color:var(--paper-ink);font-size:13px;padding:0;margin-bottom:4px}
+.ev-big{width:124px;height:124px;margin:4px auto 8px;background:rgba(255,255,255,.5);border-radius:18px;display:flex;align-items:center;justify-content:center;animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
+.ev-big svg{width:96px;height:96px}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.folder h3.c{text-align:center}
+.ev-detail{font-size:14px;line-height:1.75;margin:6px 0 14px}
+.ev-present{width:100%;height:50px;border:none;border-radius:10px;background:var(--stamp);color:#fff;font-weight:700;font-size:16px}
+.toast{position:absolute;left:50%;bottom:160px;z-index:6;display:flex;align-items:center;gap:8px;background:var(--paper);color:var(--paper-ink);padding:8px 14px 8px 8px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.45);font-weight:700;font-size:14px;white-space:nowrap;animation:toast 2s ease forwards;pointer-events:none}
+.toast svg{width:40px;height:40px}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,20px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.06)}20%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
+.quick button.food{border-color:#c9a24a;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.cutin .item,.cutin .big.on,.cutin .sub.on{opacity:1;animation:none}.app.quake,.cutin .lines,.toast,.ev-big{animation:none}}
+
+
+/* ===== 取調室の舞台 ===== */
+.lamp{position:absolute;top:0;left:50%;width:0;height:0;transform-origin:50% 0;animation:sway 7s ease-in-out infinite;pointer-events:none}
+.lamp.cone{z-index:0}
+.lamp.cone i{position:absolute;top:16px;left:-170px;width:340px;height:250px;background:radial-gradient(ellipse at 50% 0%,var(--lamp),transparent 66%)}
+.lamp.shade{z-index:2}
+.lamp.shade i{position:absolute;top:0;left:-1px;width:2px;height:12px;background:#0b0c0d}
+.lamp.shade b{position:absolute;top:11px;left:-24px;width:48px;height:13px;background:linear-gradient(#3a3f44,#1c1f22);border-radius:6px 6px 16px 16px;box-shadow:0 5px 14px 3px rgba(255,236,180,.35)}
+@keyframes sway{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+.lamp.swing{animation:swing 1.8s ease-out,sway 7s ease-in-out 1.8s infinite}
+@keyframes swing{0%{transform:rotate(-1.6deg)}12%{transform:rotate(11deg)}32%{transform:rotate(-8deg)}52%{transform:rotate(5deg)}72%{transform:rotate(-3deg)}100%{transform:rotate(-1.6deg)}}
+.desk{position:absolute;left:0;right:0;bottom:0;height:30px;z-index:2;background:linear-gradient(#6a655c,#3f3c37);border-top:2px solid #857f74;box-shadow:0 -8px 14px rgba(0,0,0,.35)}
+.trophies{position:absolute;left:8px;bottom:4px;display:flex;gap:3px}
+.tro{width:22px;height:22px;background:#e7d7a9;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.5);animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+.tro svg{width:100%;height:100%}
+.tro:nth-child(odd){transform:rotate(-7deg)}.tro:nth-child(even){transform:rotate(6deg)}
+.rec{position:absolute;right:10px;bottom:7px;font-size:9px;letter-spacing:.05em;color:#c9c5bb;display:flex;align-items:center;gap:4px;background:#17191b;padding:1px 6px;border-radius:3px}
+.rec i{width:6px;height:6px;border-radius:50%;background:#e5493d;animation:recb 1.6s steps(2) infinite}
+@keyframes recb{50%{opacity:.15}}
+#hands{position:absolute;left:50%;bottom:1px;width:132px;height:36px;margin-left:-66px;z-index:3;overflow:visible}
+#hands .hL,#hands .hR{transition:transform .8s ease}
+.suspect[data-heat="1"] #hands{animation:jit .22s linear infinite}
+.suspect[data-heat="2"] #hands{animation:jit .11s linear infinite}
+.suspect[data-heat="2"] #hands .hL{transform:translateX(9px)}
+.suspect[data-heat="2"] #hands .hR{transform:translateX(-9px)}
+@keyframes jit{50%{transform:translate(.9px,.5px)}}
+.suspect[data-heat="2"] .fig{translate:0 5px;rotate:1.2deg}
+.suspect.fallen .fig{translate:0 16px;rotate:3.5deg}
+.suspect.fallen{filter:saturate(.55)}
+.locks{display:flex;justify-content:flex-end;align-items:center;gap:3px;font-size:10px;color:#a9b0b5}
+.lk{width:15px;height:17px;flex:none}
+.lk path{fill:none;stroke:#aab1b6;stroke-width:2}
+.lk rect{fill:#aab1b6}
+.lk circle{fill:#15191c}
+.lk.hidden path,.lk.hidden rect{fill:none;stroke:#646b71;stroke-width:1.2;stroke-dasharray:2 2}
+.lk.hidden circle{fill:none}
+.lk.pin path{stroke:var(--stamp)}.lk.pin rect{fill:var(--stamp)}
+.lk.pin{filter:drop-shadow(0 0 4px var(--stamp))}
+.lk.open path{stroke:#4a5156}.lk.open rect{fill:#4a5156}
+.lk.open .x{stroke:var(--stamp);stroke-width:1.6}
+.lk.bust{animation:bust .7s cubic-bezier(.2,1.5,.4,1)}
+@keyframes bust{0%{transform:scale(1)}25%{transform:scale(2.2) rotate(-25deg)}100%{transform:none}}
+#face .blink{opacity:0;animation:blink var(--bl,5s) infinite}
+@keyframes blink{0%,93%{opacity:0}95%,97.5%{opacity:1}100%{opacity:0}}
+.suspect[data-heat="2"] #face .blink{animation-duration:2.1s}
+#face.tell .pupil{animation:dart 1s ease-in-out}
+@keyframes dart{18%{translate:-3.2px 0}42%{translate:3.2px 0}66%{translate:-2.2px 0}100%{translate:0 0}}
+#face.tell .sweat.s1{opacity:1}
+.clock.low b{color:var(--stamp);animation:glow2 1s steps(2) infinite}
+@keyframes glow2{50%{opacity:.45}}
+.quick button.slam{border-color:var(--stamp);color:var(--ink)}
+
+/* 幕開け */
+.intro{position:absolute;inset:0;z-index:9;background:#050607;color:#e9e6df;display:none;flex-direction:column;justify-content:center;gap:10px;padding:0 32px;font-family:"Shippori Mincho B1",serif;font-size:20px;letter-spacing:.08em}
+.intro.on{display:flex}
+.intro p{margin:0;min-height:1.6em}
+.intro.out{animation:introOut .65s ease forwards}
+@keyframes introOut{to{opacity:0}}
+
+/* 供述調書（組み立て・結末） */
+.folder.chosho{background:#f3ecd9;color:#2b2416;background-image:repeating-linear-gradient(transparent 0 31px,rgba(43,36,22,.12) 31px 32px)}
+.sentence{font-family:"Shippori Mincho B1",serif;font-size:17px;line-height:32px;margin:6px 0 10px}
+.blank{color:#8a1f1a;background:rgba(179,38,30,.08);border-bottom:2px dashed #b3261e;border-radius:3px;padding:1px 4px;margin:0 2px;cursor:pointer;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.blank.filled{color:#2b2416;background:rgba(43,36,22,.07);border-bottom:2px solid #2b2416}
+.blank.cur{outline:2px solid #b3261e}
+.optbox{min-height:8px}
+.paper{background:#f3ecd9;color:#2b2416;border-radius:6px;padding:18px 18px 22px;position:relative;box-shadow:0 14px 30px rgba(0,0,0,.45);background-image:repeating-linear-gradient(transparent 0 29px,rgba(43,36,22,.1) 29px 30px);font-family:"Shippori Mincho B1",serif;overflow:hidden}
+.paper .p-head{font-size:24px;font-weight:800;letter-spacing:.3em;text-align:center;margin:0 0 2px}
+.paper .p-case{text-align:center;font-size:13px;opacity:.75;margin:0 0 10px}
+.paper .p-body{font-size:16px;line-height:30px;white-space:pre-wrap;margin:0}
+.paper .p-sign{margin:14px 0 0;text-align:right;font-size:15px;line-height:30px}
+.paper .thumb{display:inline-block;width:26px;height:32px;border-radius:50%;vertical-align:middle;margin-left:8px;background:repeating-radial-gradient(ellipse at 50% 60%,rgba(179,38,30,.75) 0 1.5px,transparent 1.5px 3.5px);animation:pop .5s .5s cubic-bezier(.2,1.6,.4,1) both}
+.paper .p-stats{font-family:"Zen Kaku Gothic New",sans-serif;font-size:12px;opacity:.75;margin:10px 0 0;line-height:1.6}
+.paper .p-stamp{position:absolute;right:14px;top:10px;font-size:30px;font-weight:800;color:#b3261e;border:4px solid #b3261e;padding:0 10px;border-radius:4px;transform:rotate(9deg);animation:bigStamp .35s .2s cubic-bezier(.2,1.7,.4,1) both;--r:9deg}
+.paper .p-stamp.gray{color:#55606b;border-color:#55606b}
+.hanko{width:92px;height:92px;border-radius:50%;border:4px solid #b3261e;color:#b3261e;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:14px auto 0;transform:rotate(-8deg);animation:pop .5s .9s cubic-bezier(.2,1.6,.4,1) both;font-family:"Shippori Mincho B1",serif}
+.hanko b{font-size:40px;line-height:1}
+.hanko span{font-size:12px;letter-spacing:.2em;margin-top:2px}
+
+/* 事件ファイル */
+.case-card{display:flex;gap:12px;align-items:center;position:relative;overflow:hidden}
+.case-card .th{flex:none;width:58px;height:64px;border-radius:8px;background:radial-gradient(ellipse at 50% 0%,#3a3a34,#0e1012 75%);overflow:hidden}
+.case-card .th svg{width:100%;height:100%;display:block}
+.case-card .tx{flex:1;min-width:0}
+.case-card .stars{color:#c9a24a;font-size:12px;letter-spacing:.1em}
+.case-card .done{position:absolute;right:10px;top:8px;font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:13px;color:var(--stamp);border:2px solid var(--stamp);border-radius:4px;padding:0 6px;transform:rotate(8deg)}
+@media (prefers-reduced-motion:reduce){.lamp,.rec i,#hands,#face .blink,#face.tell .pupil,.lk.bust,.tro,.hanko,.paper .thumb,.paper .p-stamp,.clock.low b{animation:none!important}.intro.out{animation:none;opacity:0}}
+
+
+/* 突きつけの流れ（証拠 → 証言） */
+.flow{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
+.flow .fi{flex:none;width:54px;height:54px;background:rgba(255,255,255,.5);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.flow .fi svg{width:42px;height:42px}
+.flow .ft{flex:1;min-width:0;font-size:13px;line-height:1.5}
+.flow .ft b{display:block;font-size:15px}
+.flow .arrow{flex:none;font-size:20px;color:var(--stamp);font-weight:700}
+.claim-card{display:block;width:100%;text-align:left;background:rgba(255,255,255,.45);border:2px dashed rgba(0,0,0,.3);border-radius:10px;padding:10px 12px;margin-bottom:8px;color:var(--paper-ink);font-size:15px;line-height:1.5;font-family:"Shippori Mincho B1",serif}
+.claim-card.pinned{border:2px solid var(--stamp)}
+.claim-card small{display:block;font-family:"Zen Kaku Gothic New",sans-serif;font-size:11.5px;margin-top:2px;opacity:.8}
+.claim-card.pinned small{color:var(--stamp);opacity:1;font-weight:700}
+.act{display:block;width:100%;height:46px;border:none;border-radius:10px;font-weight:700;font-size:15px;margin-top:8px;background:var(--paper-ink);color:var(--paper)}
+.act.red{background:var(--stamp);color:#fff}
+.act:disabled{opacity:.45}
+
+/* タイトル */
+.title{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:24px;background:radial-gradient(ellipse at 50% 0%,#4a4636 0%,#15171a 55%,#07080a 100%);color:#ece8df;overflow:hidden}
+.title .tlamp{position:absolute;top:0;left:50%;width:0;height:0;transform-origin:50% 0;animation:sway 7s ease-in-out infinite}
+.title .tlamp i{position:absolute;top:0;left:-1px;width:2px;height:46px;background:#000}
+.title .tlamp b{position:absolute;top:44px;left:-34px;width:68px;height:18px;background:linear-gradient(#3a3f44,#17191c);border-radius:8px 8px 22px 22px;box-shadow:0 8px 30px 8px rgba(255,236,180,.35)}
+.title .kicker{font-size:13px;letter-spacing:.5em;color:#b9b3a4;margin:0 0 14px;padding-left:.5em}
+.title .logo{font-family:"Shippori Mincho B1",serif;font-weight:800;font-size:84px;line-height:1;letter-spacing:.04em;color:#f4efe4;margin:0;text-shadow:0 6px 30px rgba(0,0,0,.8);position:relative}
+.title .logo span{color:#e5493d}
+.title .seal{position:absolute;right:-34px;top:-22px;font-size:17px;letter-spacing:0;color:#e5493d;border:3px solid #e5493d;border-radius:50%;width:54px;height:54px;display:flex;align-items:center;justify-content:center;transform:rotate(14deg);text-shadow:none;animation:pop .6s .5s cubic-bezier(.2,1.6,.4,1) both}
+.title .tag{font-family:"Shippori Mincho B1",serif;font-size:17px;letter-spacing:.2em;margin:18px 0 44px;color:#d8d2c4}
+.title .tb{width:min(280px,80%);height:54px;border:none;border-radius:12px;background:#b3261e;color:#fff;font-weight:700;font-size:17px;letter-spacing:.15em;margin-bottom:10px}
+.title .tb.sub{background:transparent;border:1px solid rgba(255,255,255,.3);color:#ece8df;height:46px;font-size:15px}
+.title .ver{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:11px;color:#7d7a72}
+.how .step{display:flex;gap:12px;align-items:center;margin:0 0 12px}
+.how .step .n{flex:none;width:52px;height:52px;border-radius:12px;background:var(--panel);display:flex;align-items:center;justify-content:center}
+.how .step .n svg{width:40px;height:40px}
+.how .step b{display:block;font-family:"Shippori Mincho B1",serif;font-size:17px}
+.how .step span{font-size:13px;color:var(--muted);line-height:1.5;display:block}
+.how h2{font-family:"Shippori Mincho B1",serif;font-size:15px;margin:16px 0 8px;color:var(--muted);font-weight:700}
+.case-card .no{font-size:10px;letter-spacing:.15em;color:var(--muted);display:block}
+.cover .count{font-size:13px;color:var(--muted);margin:0 0 6px}
+
+/* 顔 */
+#face .sweat{opacity:0;transition:opacity .4s;animation:drip 2.2s infinite ease-in}
+#face[data-lv="2"] .sweat.s1,#face[data-lv="3"] .sweat,#face[data-lv="4"] .sweat{opacity:1}
+#face .sweat.s2{animation-delay:.9s}
+@keyframes drip{0%{transform:translateY(0)}80%{transform:translateY(14px)}100%{transform:translateY(14px);opacity:0}}
+#face .pupil{transition:transform .25s}
+#face.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+@media (max-height:700px){.suspect{height:196px}}
+@media (prefers-reduced-motion:reduce){#face .sweat,#face.shake,.stampline,.chips.picking .chip,.fig,.fig.zoom,.flick,.flash.on,.glow{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="top">
+    <div class="case" id="casetitle">取調室</div>
+    <button class="snd" id="logbtn" type="button">記録</button>
+    <button class="snd" id="voice" type="button" aria-label="読み上げの入り切り" hidden>声 ON</button>
+    <button class="snd" id="snd" type="button" aria-label="効果音の入り切り">音 ON</button>
+    <div class="clock" id="clockbox">残り <b id="clock">4:00</b></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="suspect" id="suspect" data-heat="0">
+    <div class="lamp cone" aria-hidden="true"><i></i></div>
+    <div class="fig" id="fig"><svg id="face" data-lv="0" viewBox="0 0 200 220" role="img" aria-label="容疑者"></svg></div>
+    <div class="lamp shade" aria-hidden="true"><i></i><b></b></div>
+    <div class="flick"></div>
+    <div class="desk" aria-hidden="true"><div class="trophies" id="trophies"></div><div class="rec"><i></i>REC</div></div>
+    <svg id="hands" viewBox="0 0 132 36" aria-hidden="true"></svg>
+    <div class="nameplate" id="nameplate"></div>
+    <div class="status"><div class="locks" id="locks"></div><div class="gauge">追い詰め度<div class="bar"><div class="fill" id="stress"></div></div></div></div>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <div class="log" id="log" aria-live="polite"></div>
+
+  <div class="memo">
+    <h2>証言メモ（点線＝あいまい／赤枠＝言質を取った）</h2>
+    <div class="chips" id="chips"><span class="empty">まだ何も聞いていない</span></div>
+  </div>
+
+  <div class="ask" id="ask">
+    <div class="hintbar" id="hintbar"><span></span><button id="hintx" type="button" aria-label="手引きを閉じる">×</button></div>
+    <div class="pickbar" id="pickbar"><span id="pickmsg"></span><button id="pickcancel" type="button">やめる</button></div>
+    <div class="quick" id="quick"></div>
+    <div class="row" id="row">
+      <button class="btn ev" id="evbtn" type="button">証拠<i class="dot" id="evdot"></i></button>
+      <button class="btn chk" id="chkbtn" type="button">裏取り</button>
+      <input id="q" placeholder="質問を書く" autocomplete="off" enterkeyhint="send">
+      <button class="btn send" id="send" type="button">聞く</button>
+    </div>
+    <button class="finalbtn" id="finalbtn" type="button">事件を組み立てる</button>
+  </div>
+
+  <div class="cutin" id="cutin" aria-live="assertive"></div>
+  <div class="sheet" id="sheet">
+    <div class="folder" id="folder" role="dialog" aria-label="シート"></div>
+  </div>
+
+  <div class="cover" id="cover"></div>
+  <div class="intro" id="intro"></div>
+</div>
+<script>
+/* ================= 事件データ ================= */
+const CASE_BIKE = {
+  id:"bike", stars:1, heart:"実家のお袋さん、心配してるんじゃないのか", when:"あの日の夕方", confessLen:"3〜4文", lastStand:"開き直って「でも、俺が盗んだって決まったわけじゃないっすよね。なんで俺がそんなことするんすか」と言う", label:"手ほどき：駅前の自転車", face:"sk", alwaysTut:true,
+  summary:"駅前の駐輪場から自転車が消えた。最初はここから。",
+  type:"面倒くさがりで、嘘が雑なタイプ",
+  suspect:{name:"坂口 大輔", sub:"29歳・フリーター", nick:"坂口"},
+  brief:[
+    "駅前の駐輪場から、鍵をかけ忘れた青い自転車が消えた。",
+    "翌朝、坂口のアパートの前で発見。本人は「置いてあっただけ」と言う。"
+  ],
+  startLine:"11月23日 午前11時 取調べ開始",
+  opener:"自転車？ ああ、あれ。家の前に置いてあったんすよ。俺のじゃないっす。",
+  walkLine:"「もういいっすか。眠いんで」坂口はあくびをしながら立ち上がった。",
+  lawyerLine:"「なんか面倒くさくなってきたんで、弁護士とか呼んでもらえます？」坂口は机に突っ伏した。",
+  timeLine:"任意の取調べは時間切れ。坂口は「じゃ、帰りまーす」と出ていった。",
+  walkEnd:"坂口はそのまま帰っていった。任意の取調べは打ち切られた。",
+  confessFallback:"……すんません、乗って帰りました。",
+  persona:"あなたは日本の警察の取調室で、刑事の取調べを受けている容疑者「坂口 大輔」（29歳・フリーター・一人称は「俺」）を演じる。気だるげで面倒くさがり。くだけた口調（「〜っす」）。嘘はその場しのぎで雑。図星を突かれると、すぐに目をそらして口ごもる。",
+  rules:"・言い訳は短く雑。難しい理屈は言わない。",
+  truth:`真相（あなた＝坂口だけが知っている。自分から話してはいけない）：
+11/22の18:15、坂口は駅前の駐輪場で、鍵のかかっていない青いクロスバイクを見つけた。家まで歩くのが面倒で、そのまま乗って帰り、アパートの前に置きっぱなしにした。18:30ごろ、帰ってくるところを近所の人に見られている。`,
+  P:{start:40, hit:30, miss:-3, esc:-5, blurt:50, lawyerAt:5, afterLawyer:25},
+  maxTurns:20, minPerTurn:6,
+  tut:{lie:"B1", ev:"Q1"},
+  final:"B2",
+  quick:[
+    {t:"昨日の夕方、どこにいた？", lie:"B1"},
+    {t:"あの青い自転車は？", lie:"B2"},
+    {t:"いつもは何で駅に行く？", lie:null}
+  ],
+  evidence:[
+    {id:"Q1", icon:"cctv", start:true, name:"駐輪場の防犯カメラ", text:"18:15、灰色のキャップに緑のウインドブレーカーの男が、駅前の駐輪場に入っていく。坂口はいま、同じ服を着ている。"},
+    {id:"Q2", icon:"person", start:true, name:"近所の人の話", text:"18:30ごろ、坂口が青い自転車に乗って帰ってきて、アパートの前に止めるのを見た。"},
+    {id:"Q3", icon:"doc", start:true, name:"持ち主の届け出", text:"青いクロスバイク。18:00に駅前の駐輪場に止めたが、鍵をかけ忘れた。19:00に戻ったら無かった。"}
+  ],
+  lies:{
+    B1:{text:"昨日は駅前の駐輪場には行っていない", short:"駐輪場には行っていない",
+        pin:"昨日は、駅前の駐輪場に一度も入っていない", pinShort:"駐輪場には一度も入っていない",
+        pinQ:"昨日、駅前の駐輪場には一度も入っていない。そうだな？",
+        escape:"駅の近くは通ったかもしれない、駐輪場の中かどうかは覚えてない、と言い逃れる",
+        breaks:["Q1"], after:null, check:{ev:null, none:"駐輪場の件は、防犯カメラ以上のものは出ませんでした。"}},
+    B2:{text:"自転車は家の前に置いてあっただけで、誰かが置いていった", short:"家の前に置いてあっただけ",
+        pin:"あの青い自転車には、一度も乗っていない", pinShort:"あの自転車には一度も乗っていない",
+        pinQ:"あの青い自転車には、一度も乗っていない。間違いないな？",
+        escape:"邪魔だったから、どかすときにちょっと押しただけ、と言い逃れる",
+        breaks:["Q2"], after:"B1", check:{ev:null, none:"自転車の件は、近所の人の話以上のものは出ませんでした。"}}
+  },
+  asm:{
+    intro:"空欄を埋めて、署名を迫る。答えは証拠に書いてある。",
+    template:"私は、{motive}、{flow}。",
+    slots:[
+      {key:"motive", label:"動機：なぜ持っていったのか", options:[
+        {t:"駅から家まで歩くのが面倒だったから", ok:true},
+        {t:"自転車を売って、金にするため"},
+        {t:"持ち主に恨みがあったから"}]},
+      {key:"flow", label:"経緯：どうやって持っていったのか", options:[
+        {t:"鍵のかかっていない自転車に乗って、そのまま家まで帰った", ok:true},
+        {t:"誰かが家の前に置いていった"},
+        {t:"鍵を壊して持ち出した"}]}
+    ]}
+};
+
+const CASE_T = {
+  id:"cake", stars:2, heart:"親御さん、仕送りしてくれてるんだろ", when:"あの夜", confessLen:"4〜5文", lastStand:"開き直って「でも、俺が盗ったって証拠にはならないっすよね。どうやって、なんで、って説明できるんすか」と言う", label:"消えたホールケーキ", face:"c",
+  summary:"洋菓子店の予約ケーキが、店頭から消えた。",
+  type:"お調子者で、嘘が顔に出るタイプ",
+  suspect:{name:"小森 翔太", sub:"20歳・大学生", nick:"小森"},
+  brief:[
+    "洋菓子店「ミモザ」の受け取り棚から、予約のホールケーキが消えた。",
+    "容疑者は近所の大学生・小森。黄色いパーカーを着ている。"
+  ],
+  startLine:"11月23日 午後4時 取調べ開始",
+  opener:"え、ケーキ？ 何の話っすか。俺、甘いものとか別に好きじゃないし。",
+  walkLine:"「もういいっすか、バイトあるんで」小森はスマホを見ながら立ち上がった。",
+  lawyerLine:"「なんか、こういうのって弁護士とか呼べるんすよね？ 呼んでください」小森は急に黙った。",
+  timeLine:"任意の取調べは時間切れ。小森は「じゃ、失礼しまーす」と帰っていった。",
+  walkEnd:"小森はそのまま帰っていった。任意の取調べは打ち切られた。",
+  confessFallback:"……すみません、俺です。",
+  persona:"あなたは日本の警察の取調室で、刑事の取調べを受けている容疑者「小森 翔太」（20歳・大学生・一人称は「俺」）を演じる。お調子者で浅はか。若者らしいくだけた口調（「〜っす」「マジで」）。嘘が下手で、図星を突かれるとすぐ目が泳ぎ、言葉に詰まる。着ている黄色いパーカーを聞かれたら「サークルのやつっす」と答える。",
+  rules:"・浅はかなので、言い訳はどれも薄い。凝った理屈は言わない。",
+  truth:`真相（あなた＝小森だけが知っている。自分から話してはいけない）：
+小森は11/22が彼女の誕生日なのに金がなく、何も用意していなかった。19:41、パティスリー・ミモザの前を通りかかり、ドアの内側の受け取り棚に「タナカ様」の名札がついたホールケーキの箱があるのを見た。店員が奥で電話に出ている隙に、ドアを開けて箱を持ち出した。20:15、彼女と食べる前にSNSに写真を投稿した（名札が写っていることに気づいていない）。ミモザには前に何度か行ったことがあり、ポイントカードも持っている。`,
+  P:{start:35, hit:25, miss:-4, esc:-6, blurt:50, lawyerAt:4, afterLawyer:20},
+  tut:{lie:"TA", ev:"C2"},
+  final:"T3",
+  quick:[
+    {t:"ミモザって店、知ってる？", lie:"TA"},
+    {t:"22日の夜、何してた？", lie:"T1"},
+    {t:"ケーキについて", lie:"T2"},
+    {t:"そのパーカーは？", lie:null}
+  ],
+  evidence:[
+    {id:"C1", icon:"cctv", start:true,  name:"商店街の防犯カメラ", text:"19:41、背中に「軽音サークル Bコード」と書かれた黄色いパーカーの男が、ミモザの前で立ち止まる。手元は看板に隠れて見えない。小森はいま、同じパーカーを着ている。"},
+    {id:"C2", icon:"card", start:true,  name:"財布のポイントカード", text:"小森の財布に「パティスリー・ミモザ」のポイントカード。スタンプは3つ、最後の日付は先月。"},
+    {id:"C3", icon:"person", start:true,  name:"店長の話", text:"予約品はドアの内側の受け取り棚に置く。歩道に出したことは一度もない。19時半には棚にあった。19時40分ごろ、店員は奥で電話に出ていた。"},
+    {id:"C4", icon:"phone", start:false, name:"小森のSNS投稿", text:"20:15、「彼女の誕生日！ 今日の主役」とホールケーキの写真。箱には「ミモザ」のロゴと「タナカ様」の名札がはっきり写っている。"}
+  ],
+  lies:{
+    TA:{text:"ミモザなんて店は知らないし、行ったこともない", short:"ミモザには行ったことがない",
+        pin:"パティスリー・ミモザには、今まで一度も入ったことがない", pinShort:"ミモザには一度も入ったことがない",
+        pinQ:"ミモザには、今まで一度も入ったことがない。そうだな？",
+        escape:"カードは誰かにもらっただけ、店の名前なんていちいち覚えてない、と言い逃れる",
+        breaks:["C2"], after:null,
+        check:{ev:null, none:"ポイントカードの件は、手元にある以上のものは出ませんでした。"}},
+    T1:{text:"その夜はずっと家で動画を見ていた", short:"あの夜は家で動画を見ていた",
+        pin:"19時から21時まで、一歩も家から出ていない", pinShort:"19〜21時は一歩も家から出ていない",
+        pinQ:"19時から21時まで、一歩も家から出ていない。間違いないな？",
+        escape:"コンビニくらいは行ったかもしれない、時間までは覚えてない、と言い逃れる",
+        breaks:["C1"], after:null,
+        check:{ev:null, none:"家にいたという話の裏は、防犯カメラ以上のものは出ませんでした。"}},
+    T2:{text:"店の前は通っただけで、ケーキなんて知らない", short:"店の前は通っただけ。ケーキは知らない",
+        pin:"タナカ様のケーキの箱には、指一本触れていないし、見たこともない", pinShort:"ケーキの箱には触れてもいない",
+        pinQ:"そのケーキの箱には、指一本触れていないし、見たこともない。そうだな？",
+        escape:"通りすがりにちらっと見たかもしれないけど、それだけ、と言い逃れる",
+        breaks:["C4"], after:"T1",
+        check:{ev:"C4", report:"小森のSNSを調べました。"}},
+    T3:{text:"ケーキは店の前の歩道に置いてあったのを拾っただけ", short:"歩道に置いてあったのを拾っただけ",
+        pin:"箱は外の歩道の上にあって、店の中の棚からは取っていない", pinShort:"箱は歩道にあった。棚からは取っていない",
+        pinQ:"箱は外の歩道にあって、店の中の棚からは取っていない。間違いないな？",
+        escape:"店の入口あたりだったかも、暗かったしよく覚えてない、と言い逃れる",
+        breaks:["C3"], after:"T2",
+        check:{ev:null, none:"店の話は、店長から聞いたとおりでした。"}}
+  },
+  asm:{
+    intro:"空欄を埋めて、署名を迫る。外すと時間を失う。",
+    template:"私は、{motive}、{time}、{flow}。",
+    slots:[
+      {key:"motive", label:"動機：なぜ盗んだのか", options:[
+        {t:"彼女の誕生日なのに、プレゼントを買う金がなかったから", ok:true},
+        {t:"ミモザの店長に恨みがあったから"},
+        {t:"ネットで転売して金にするため"},
+        {t:"予約したタナカに嫌がらせをするため"}]},
+      {key:"flow", label:"経緯：どうやって持ち出したのか", options:[
+        {t:"歩道に落ちていた箱を、捨てられていると思って拾った"},
+        {t:"店員が奥で電話に出ている隙に、ドアの内側の棚から持ち出した", ok:true},
+        {t:"「タナカです」と名乗って、店員から受け取った"},
+        {t:"配達中の店員から、箱を奪って逃げた"}]},
+      {key:"time", label:"時刻：持ち出したのは", keep:true, options:[
+        {t:"19:30ごろ"},{t:"19:41ごろ", ok:true},{t:"20:15ごろ"},{t:"21:00ごろ"}]}
+    ]}
+};
+
+const CASE_A = {
+  id:"gallery", stars:3, heart:"修復の師匠が今のお前を見たら、何て言うだろうな", when:"あの夜", confessLen:"6〜8文", lastStand:"最後の意地で「それでも、僕が黒川さんを殺したという証拠にはならない。動機も、あの夜の流れも、説明できるんですか」と刑事に挑む", label:"画廊店主殺害事件", face:"a",
+  summary:"銀座の画廊で、店主が机のブロンズ像で殴られて死んだ。",
+  type:"理屈っぽく、冷静に嘘を重ねるタイプ",
+  suspect:{name:"三上 透", sub:"34歳・絵画修復師", nick:"三上"},
+  brief:[
+    "画廊の事務室で、店主の黒川が殴られて死んでいた。凶器は机のブロンズ像。死亡推定は21時〜21時40分。",
+    "容疑者は、修復を請け負っていた修復師・三上。"
+  ],
+  startLine:"11月21日 午前10時 取調べ開始",
+  opener:"任意ですよね？ 黒川さんのことは本当に残念ですけど、僕は何も知りませんよ。",
+  walkLine:"「任意でしょう？ もう結構です。帰らせてもらいます」三上は椅子を引いて立ち上がった。",
+  lawyerLine:"「弁護士を呼んでください。それまで、何も話しません」三上は腕を組んで目を閉じた。",
+  timeLine:"任意の取調べは時間切れ。三上は「もういいですか」と言って、取調室を出ていった。",
+  walkEnd:"三上は席を立ち、そのまま帰っていった。任意の取調べは打ち切られた。",
+  confessFallback:"……僕がやりました。",
+  persona:"あなたは日本の警察の取調室で、刑事の取調べを受けている容疑者「三上 透」（34歳・絵画修復師・一人称は「僕」）を演じる。神経質で理屈っぽく、丁寧語だが追い詰められると言葉が乱れる。右手首のひっかき傷を聞かれたら「飼い猫にやられた」と答える。",
+  rules:"",
+  truth:`真相（あなた＝三上だけが知っている。自分から話してはいけない）：
+三上は借金返済のため、黒川から修復を預かった藤島の風景画『早春の川』の本物を手元に残し、自分で描いた模写を返した。黒川は鑑定でそれが贋作だと知り、11/20の夜に三上を画廊へ呼んだ。三上は電車で向かい、21:05頃裏口から入った。事務室で黒川は「警察に話す」と言い、口論から揉み合いになって黒川が三上の右手首を引っかいた。21:25頃、三上は机のブロンズ像で黒川を殴った。像の指紋を拭き、21:34に傘をさして裏口から出た。本物の絵はアトリエの床下に隠してある。`,
+  P:{start:30, hit:22, miss:-8, esc:-12, blurt:55, lawyerAt:3, afterLawyer:14},
+  tut:{lie:"L2", ev:"E6"},
+  final:"L6",
+  quick:[
+    {t:"事件の夜、どこにいた？", lie:"L1"},
+    {t:"黒川さんとの関係は？", lie:"L2"},
+    {t:"藤島の風景画について", lie:"L3"},
+    {t:"その手首の傷は？", lie:null}
+  ],
+  evidence:[
+    {id:"E1", icon:"cctv", start:true,  name:"裏口の防犯カメラ", text:"21:34、紺地に白い縁取りの傘をさした人物が画廊の裏口から出ていく。顔は見えないが、同じ柄の傘が三上の自宅で押収されている。"},
+    {id:"E2", icon:"vial", start:false, name:"被害者の爪の付着物", text:"黒川の右手の爪から皮膚片と、絵画修復で使う溶剤とダンマル樹脂の混合物が検出された。"},
+    {id:"E3", icon:"sketch", start:false, name:"アトリエの下絵", text:"三上のアトリエのごみ袋から、藤島の『早春の川』とそっくりな構図の下絵が数枚見つかった。"},
+    {id:"E4", icon:"tower", start:false, name:"スマホの基地局記録", text:"三上のスマホは21:02〜21:38、画廊から300mの基地局につながっていた。自宅は8km離れている。"},
+    {id:"E5", icon:"shoe", start:false, name:"靴底の白い粉", text:"押収した三上の靴の溝に白い大理石の粉。画廊は11/18に床を張り替えたばかりで、その石材と一致。"},
+    {id:"E6", icon:"notebook", start:true,  name:"被害者の通話履歴と手帳", text:"11/20の17:12、黒川から三上へ4分間の通話。手帳の同じ日の欄に「夜、三上。藤島の件、はっきりさせる」。"},
+    {id:"E7", icon:"wrist", start:true,  name:"右手首のひっかき傷", text:"取調べ開始時に確認。三上の右手首に新しい3本のひっかき傷。"},
+    {id:"E8", icon:"watch", start:false, name:"被害者の腕時計", text:"黒川の腕時計は21:25で止まっていた。何かに強くぶつかった衝撃で壊れたとみられる。"}
+  ],
+  lies:{
+    L1:{text:"その夜は自宅のアトリエで作業していた", short:"あの夜は家で作業していた",
+        pin:"21時から22時の間も、ずっと自宅にいて一歩も外に出ていない", pinShort:"21〜22時はずっと自宅。外出なし",
+        pinQ:"21時から22時の間、一歩も外に出ていない。間違いないですね？",
+        escape:"作業の合間に画材を買いに出たかもしれない、時間までは覚えていない、と言い逃れる",
+        breaks:["E4"], after:null,
+        check:{ev:"E4", report:"三上のスマホの位置記録が出ました。"}},
+    L2:{text:"黒川さんとはここしばらく会っていないし、揉め事もない", short:"黒川とは最近会っていない",
+        pin:"この1か月、黒川とは電話でも一度も話していない", pinShort:"この1か月、電話でも話していない",
+        pinQ:"この1か月、黒川さんとは電話でも一度も話していない。そうですね？",
+        escape:"電話は来たがただの事務連絡だった、会っていないと言っただけだ、と言い逃れる",
+        breaks:["E6"], after:null,
+        check:{ev:null, none:"電話の件は、手元の通話履歴以上のものは出ませんでした。"}},
+    L3:{text:"藤島の絵が贋作だなんて知らない。預かった本物を修復して返しただけ", short:"贋作のことは知らない。修復しただけ",
+        pin:"藤島の『早春の川』を自分で模写したり、下絵に写したりしたことは一度もない", pinShort:"『早春の川』を写したことは一度もない",
+        pinQ:"藤島の『早春の川』を、模写したことも、下絵に写したことも一度もない。そうですね？",
+        escape:"修復の参考に構図を写し取るのは普通の作業だ、と言い逃れる",
+        breaks:["E3"], after:null,
+        check:{ev:"E3", report:"アトリエのごみを回収して調べました。"}},
+    L4:{text:"気分転換に画廊の近くへ出かけただけで、画廊には入っていない", short:"近くに行っただけ。画廊には入っていない",
+        pin:"床を張り替えた11月18日より後は、画廊の中に一度も足を踏み入れていない", pinShort:"11/18以降、画廊には一歩も入っていない",
+        pinQ:"11月18日に床を張り替えた後、画廊の中には一歩も入っていない。間違いないですね？",
+        escape:"粉は張り替えの後に納品で寄ったときに付いたのだろう、あの夜とは関係ない、と言い逃れる",
+        breaks:["E5"], after:"L1",
+        check:{ev:"E5", report:"押収した靴を鑑識に回した結果が出ました。"}},
+    L5:{text:"画廊には寄ったが少しだけで、帰るとき黒川さんは生きていた", short:"少し寄っただけ。黒川は生きていた",
+        pin:"21時15分までには画廊を出ていて、それ以降は近づいていない", pinShort:"21:15までに画廊を出た",
+        pinQ:"21時15分までには画廊を出て、それ以降は近づいていない。そうですね？",
+        escape:"『少し』と言っただけで正確な時刻までは覚えていない、と言い逃れる",
+        breaks:["E1","E4"], after:"L4",
+        check:{ev:"E8", report:"遺体の持ち物を調べ直しました。"}},
+    L6:{text:"口論はしたが、手は出していない", short:"口論はしたが、手は出していない",
+        pin:"黒川さんの体には一切触れていないし、黒川さんからも触れられていない", pinShort:"互いに体には一切触れていない",
+        pinQ:"黒川さんの体には一切触れていないし、触れられてもいない。そうですね？",
+        escape:"絵の受け渡しで手が触れることくらいある、傷は自宅の猫だ、と言い逃れる",
+        breaks:["E2","E7"], after:"L5",
+        check:{ev:"E2", report:"被害者の爪の鑑定結果が出ました。"}}
+  },
+  asm:{
+    intro:"空欄を埋めて、署名を迫る。外すと時間を失う。",
+    template:"私は、{motive}、{time}、{flow}。",
+    slots:[
+      {key:"motive", label:"動機：なぜ殺したのか", options:[
+        {t:"修復代金の未払いを巡って口論になったから"},
+        {t:"黒川に画廊の権利を奪われた恨みから"},
+        {t:"贋作へのすり替えを暴かれ、警察に話すと言われたから", ok:true},
+        {t:"黒川に交際相手のことで脅されたから"}]},
+      {key:"flow", label:"経緯：あの夜、何が起きたか", options:[
+        {t:"黒川に呼ばれて画廊へ行き、口論から揉み合いになって、衝動的に殴った", ok:true},
+        {t:"殺すつもりで黒川を呼び出し、計画的に画廊へ誘い込んだ"},
+        {t:"盗みに入ったところを黒川に見つかり、慌てて殴った"},
+        {t:"黒川を殴ったあとで、絵を盗むために画廊へ入った"}]},
+      {key:"time", label:"時刻：黒川を殴ったのは", keep:true, options:[
+        {t:"21:05ごろ"},{t:"21:25ごろ", ok:true},{t:"21:34ごろ"},{t:"21:40ごろ"}]}
+    ]}
+};
+
+const CASE_B = {
+  id:"highway", stars:3, heart:"娘さん、来年中学だってな", when:"あの夜", confessLen:"6〜8文", lastStand:"逆上して「だからって、俺がわざとはねたって証拠にはならねえだろ。なんでそんなことする必要があるんだよ、説明してみろ」と怒鳴る", label:"県道ひき逃げ事件", face:"b",
+  summary:"深夜の県道で歩行者がトラックにはねられ、そのまま逃げられた。",
+  type:"短気で口が悪く、図星で逆上するタイプ",
+  suspect:{name:"野島 剛", sub:"41歳・運送会社ドライバー", nick:"野島"},
+  brief:[
+    "深夜の県道で、歩行者の宮下が大型車にはねられて死亡。車は走り去った。",
+    "容疑者は、宮下の元同僚でトラック運転手の野島。最初から機嫌が悪い。"
+  ],
+  startLine:"11月21日 午後2時 取調べ開始",
+  opener:"……任意だろ。何の用だよ。宮下のことなら、俺は何も知らねえぞ。",
+  walkLine:"「やってられるか！」野島は机を蹴って立ち上がり、取調室を出ていった。",
+  lawyerLine:"「もうしゃべらねえ。弁護士を呼べ！ 呼ぶまで一言も話さねえぞ！」野島は椅子にふんぞり返った。",
+  timeLine:"任意の取調べは時間切れ。野島は「もういいだろ！」と吐き捨てて、取調室を出ていった。",
+  walkEnd:"野島は席を立ち、そのまま帰っていった。任意の取調べは打ち切られた。",
+  confessFallback:"……俺がやった。",
+  persona:"あなたは日本の警察の取調室で、刑事の取調べを受けている容疑者「野島 剛」（41歳・運送会社の4トントラックのドライバー・一人称は「俺」）を演じる。短気で口が悪く、敬語は使わない（「うるせえな」「何度言わせんだよ」）。根は小心者で、図星を突かれると逆上して声を荒げ、勢いで余計なことまで口走る。",
+  rules:`・追い詰め度が45を超えているとき、刑事に図星を突かれたり挑発されたりすると、逆上して声を荒げ、聞かれていなくても「まだ言い切っていない」嘘の言質の条件を勢いで言い切ってしまうことがある。
+・見当違いの指摘をされると、苛立って乱暴な言葉で責め立てる。`,
+  truth:`真相（あなた＝野島だけが知っている。自分から話してはいけない）：
+野島は宮下から300万円を借りていて、先月から何度も返済を迫られていた。11/19は夜勤の待機日で、23:12、眠れずに仮眠室を抜け出し、担当の4トントラックを無断で出して夜食を買いに行った。県道を走っていると、前方の歩道を歩く宮下を偶然見つけた。借金への恨みが一気に噴き出し、衝動的にアクセルを踏み込んで、23:41に宮下をはねた。ドライブレコーダーには「あれ、宮下か？」という自分のつぶやきと衝突音、「やっちまった」という声が残っている。止まらずに逃げ、0:26に営業所へ戻った。バンパーの傷は、その夜についたものだ。`,
+  P:{start:25, hit:12, miss:5, esc:2, blurt:45, lawyerAt:2, afterLawyer:35},
+  tut:{lie:"K2", ev:"S1"},
+  final:"K4",
+  quick:[
+    {t:"19日の夜、どこにいた？", lie:"K1"},
+    {t:"宮下さんとの関係は？", lie:"K2"},
+    {t:"トラックのフロントの傷は？", lie:"K3"},
+    {t:"県道は通った？", lie:"K5"}
+  ],
+  evidence:[
+    {id:"S1", icon:"phone", start:true,  name:"宮下のスマホと借用書", text:"宮下のスマホに、先月から野島への発信が3回（うち2回は着信拒否）。宮下の机から、野島名義の借用書（300万円・返済期限は10月末）が見つかった。"},
+    {id:"S2", icon:"cctv", start:false, name:"県道沿いコンビニの防犯カメラ", text:"23:38、コンビニ前の県道を白い4トントラックが通過する。荷台に「北陽運輸」のロゴ。ナンバーの下2桁は「42」で、野島の担当車と同じ。"},
+    {id:"S3", icon:"doc", start:true,  name:"車両の点検記録と写真", text:"会社から取り寄せた11/19の点検記録。18:05、野島自身が始業点検で「フロントバンパー異常なし」とサインしている。添付の写真にも傷はない。"},
+    {id:"S4", icon:"gate", start:false, name:"営業所のゲート記録", text:"11/19、野島の担当車は23:12に出庫し、翌0:26に入庫した。営業所から現場の県道までは車で約25分。"},
+    {id:"S5", icon:"audio", start:false, name:"ドライブレコーダーの音声", text:"23:41、運転席の男が「…あれ、宮下か？」とつぶやき、エンジンが唸る。直後に鈍い衝突音と、「…やっちまった」という声。"},
+    {id:"S6", icon:"vial", start:true,  name:"現場の塗膜片", text:"現場の路面から白い塗膜片。鑑定の結果、北陽運輸の4トントラックと同じ塗料と判明した。同社の4トンは全部で6台。"},
+    {id:"S7", icon:"person", start:true,  name:"近隣住民の通報", text:"23時40分ごろ、「ドンという大きな音がして、白い大型トラックが止まらずに走り去った」という通報。"}
+  ],
+  lies:{
+    K1:{text:"その夜は夜勤の待機で、朝まで営業所の仮眠室で寝ていた", short:"朝まで仮眠室で寝ていた",
+        pin:"23時から朝まで、営業所の敷地から一歩も出ていない", pinShort:"23時〜朝は敷地から一歩も出ていない",
+        pinQ:"23時から朝まで、営業所の敷地から一歩も出ていない。間違いないな？",
+        escape:"眠れなくて外の自販機に缶コーヒーを買いに行ったかもしれない、敷地の外かどうかまでは覚えていない、と言い逃れる",
+        breaks:["S4"], after:null,
+        check:{ev:"S4", report:"営業所のゲート記録を取り寄せました。"}},
+    K2:{text:"宮下とは辞めてから会っていないし、連絡もしていない", short:"宮下とは辞めてから連絡もしていない",
+        pin:"会社を辞めてから今まで、宮下とは顔も見ていないし、電話もしていない", pinShort:"辞めてから顔も見ず、電話もしていない",
+        pinQ:"会社を辞めてから今まで、宮下とは顔も見ていないし、電話もしていない。そうだな？",
+        escape:"着信はあったかもしれないが出ていない、番号は消した、間違い電話だった、と言い逃れる",
+        breaks:["S1"], after:null,
+        check:{ev:null, none:"その件は、手元の借用書と通話履歴以上のものは出ませんでした。"}},
+    K5:{text:"出かけたのは営業所の裏の国道沿いのコンビニまでで、県道には入っていない", short:"国道のコンビニに行っただけ。県道は通っていない",
+        pin:"あの夜、県道には一度も入っていない。国道だけを走った", pinShort:"あの夜、県道には一度も入っていない",
+        pinQ:"あの夜、県道には一度も入っていない。国道だけを走った。間違いないな？",
+        escape:"道はよく間違えるし、県道に出たかどうかは覚えていない、と言い逃れる",
+        breaks:["S2"], after:"K1",
+        check:{ev:"S2", report:"県道沿いの防犯カメラの映像を洗い出しました。"}},
+    K3:{text:"フロントバンパーの傷は先週の積み込みでぶつけたもので、あの夜のものではない", short:"傷は先週の積み込みのときのもの",
+        pin:"傷がついたのは先週の火曜日、荷物の積み込みのとき。あの夜より前だ", pinShort:"傷がついたのは先週の火曜。あの夜より前",
+        pinQ:"傷がついたのは先週の火曜日、積み込みのとき。あの夜より前。そうだな？",
+        escape:"いつ傷がついたか正確な日までは覚えていない、整備の連中が点検で付けたのかもしれない、と言い逃れる",
+        breaks:["S3"], after:"K5",
+        check:{ev:null, none:"点検記録は、手元にあるもののとおりでした。"}},
+    K4:{text:"人をはねたとは気づかなかった。何かに乗り上げた程度だと思っていた", short:"人をはねたとは気づかなかった",
+        pin:"あの夜は、人をはねたなんて一度も思わなかった。何かに乗り上げた程度の感覚だった", pinShort:"はねたとは一度も思わなかった",
+        pinQ:"あの夜は、人をはねたなんて一度も思わなかった。何かに乗り上げた程度。そうだな？",
+        escape:"暗くて何も見えなかったし、そのあたりの記憶はあいまいだ、と言い逃れる",
+        breaks:["S5"], after:"K3",
+        check:{ev:"S5", report:"トラックのドライブレコーダーを解析しました。"}}
+  },
+  asm:{
+    intro:"空欄を埋めて、署名を迫る。外すと時間を失う。",
+    template:"私は、{motive}、{time}、{flow}。",
+    slots:[
+      {key:"motive", label:"動機：なぜはねたのか", options:[
+        {t:"解雇されたことへの逆恨みから"},
+        {t:"宮下に妻との関係を疑われたため"},
+        {t:"返済を迫られていた借金への恨みから", ok:true},
+        {t:"保険金目当てで、事故を装って殺すため"}]},
+      {key:"flow", label:"経緯：あの夜、何が起きたか", options:[
+        {t:"宮下を待ち伏せして、最初から殺すつもりではねた"},
+        {t:"偶然見かけた宮下に、恨みが噴き出して衝動的にアクセルを踏んだ", ok:true},
+        {t:"居眠り運転で、人をはねたことに気づかなかった"},
+        {t:"宮下に呼び止められて口論になり、突き飛ばして車で踏んだ"}]},
+      {key:"time", label:"時刻：宮下をはねたのは", keep:true, options:[
+        {t:"23:12ごろ"},{t:"23:38ごろ"},{t:"23:41ごろ", ok:true},{t:"23:55ごろ"}]}
+    ]}
+};
+
+const M_TRUTH = `真相（あなたが知っていること。自分から話してはいけない）：
+若旦那の恭介と番頭の源三は、この3年で旅館の金を約2,000万円横領していた（恭介の借金の穴埋め。帳簿の細工は源三）。11/21の22:30、二人は大女将に萩の間へ呼ばれ、横領の証拠を突きつけられて「明日、銀行と警察に話す」と言われた。22:40、逆上した恭介が床の間の青磁の花器で大女将を殴った（花器は割れた）。二人は源三の考えで密室を作った。閂の取っ手に釣り糸の輪をかけ、糸を障子の桟の隙間から外へ通し、縁側の外から引いて閂を落とした。22:50、恭介は先に渡り廊下から母屋へ戻り、源三が外で糸を引いて回収した。糸は源三が自室のくず籠に捨てた。帳場のパソコンは22:31から眠ったまま。二人は「22時半から23時半まで帳場で一緒に帳簿を見ていた」と口裏を合わせたが、細かいところは打ち合わせていない。`;
+const CASE_M = {
+  id:"ryokan", stars:5, when:"あの夜", confessLen:"6〜8文", lastStand:"最後の抵抗として「閂は内側からかかっていたのですよ。誰が、なぜ、どうやったのか、説明できるのですか」と刑事に挑む", label:"月見荘 離れ密室殺人事件",
+  summary:"温泉旅館の離れ。内側から閂のかかった部屋で、大女将が死んでいた。",
+  type:"容疑者3人。犯人は一人ではないが、全員とは限らない",
+  brief:[
+    "旅館の離れで、大女将が花器で殴られて死んでいた。死亡推定は22時〜23時半。",
+    "部屋は内側から閂がかかった密室。",
+    "容疑者は若旦那・番頭・仲居の3人。犯人は複数だが、全員とは限らない。"
+  ],
+  startLine:"11月22日 午後1時 取調べ開始",
+  timeLine:"任意の取調べは時間切れ。3人はそれぞれ旅館へ帰っていった。",
+  walkEnd:"容疑者が席を立ち、任意の取調べは打ち切られた。",
+  confessFallback:"……私たちが、やりました。",
+  maxTurns:36, minPerTurn:10,
+  P:{start:30, hit:20, miss:-7, esc:-10, blurt:55, shake:35, lawyerAt:3, afterLawyer:14},
+  tut:null,
+  finals:["Y3","H3"],
+  suspects:[
+    {id:"kyo", heart:"親父さんが守ってきた旅館だろう", name:"月岡 恭介", sub:"38歳・若旦那", nick:"恭介", face:"kyo", culprit:true,
+     persona:"あなたは日本の警察の取調室で、刑事の取調べを受けている容疑者「月岡 恭介」（38歳・旅館「月見荘」の若旦那・大女将の息子・一人称は「私」）を演じる。客商売らしい柔らかな丁寧語だが、プライドが高く神経質。母のことを聞かれると言葉に棘が出る。",
+     rules:"", truth:M_TRUTH,
+     opener:"母のことで、まだ何か？ 私も昨夜から一睡もしていないんです。手短にお願いします。",
+     lawyerLine:"「これ以上は、顧問弁護士を通してください」恭介は冷たく言い放った。",
+     walkLine:"「客を待たせていますので」恭介は一礼して席を立った。"},
+    {id:"gen", heart:"大女将とは40年、一緒にやってきたんだろう", name:"堀田 源三", sub:"63歳・番頭", nick:"源三", face:"gen", culprit:true,
+     persona:"あなたは日本の警察の取調室で、刑事の取調べを受けている容疑者「堀田 源三」（63歳・月見荘に40年勤める番頭・一人称は「私（わたくし）」）を演じる。古風で落ち着いた丁寧語。若旦那を子どもの頃から見てきた。閂の作りや旅館の建物のことは誰よりも詳しく、聞かれれば答える（ただし細工のことは言わない）。",
+     rules:"", truth:M_TRUTH,
+     opener:"大女将さんのことは、まだ信じられません。私にわかることでしたら、何でもお話しいたします。",
+     lawyerLine:"「申し訳ございませんが、弁護士の先生をお願いいたします」源三は深く頭を下げたまま、動かなくなった。",
+     walkLine:"「帳場が空いておりますので、失礼いたします」源三は静かに立ち上がった。"},
+    {id:"sak", heart:"故郷のおばあちゃんに、胸を張って話せることか", name:"柚木 さくら", sub:"26歳・仲居", nick:"さくら", face:"sak", culprit:false,
+     persona:"あなたは日本の警察の取調室で、取調べを受けている「柚木 さくら」（26歳・月見荘の仲居・一人称は「私」）を演じる。明るいが気が小さく、おどおどしている。犯行には一切関わっていない。旅館で禁止されている喫煙を隠れてしていたことがばれるのを、何より怖がっている。",
+     rules:"・犯行のことは本当に知らない。知らないことは知らないと言う。\n・見たことは、自分の嘘が崩れるまでは話さない。",
+     truth:`あなたが知っていること（自分から話してはいけない）：
+さくらは犯行には関わっていない。11/21の22:40ごろ、寮をこっそり抜け出し、萩の間に面した庭の植え込みの陰でたばこを吸っていた。そのとき、萩の間で陶器の割れるような音を聞いた。22:50ごろ、若旦那が渡り廊下を早足で母屋へ戻っていくのを見た。そのすぐあと、番頭の源三が萩の間の縁側の外にしゃがんで、細い糸のようなものを引いているのを見た。怖くなって寮に戻った。たばこのことがばれるのが怖くて、見たことを誰にも言っていない。翌朝、お膳を下げに行って閂が開かず、遺体の第一発見者になった。`,
+     opener:"あの、私、見つけただけで……朝、お膳を下げに行ったら、閂が開かなくて……",
+     lawyerLine:"「あの……弁護士さんって、呼べるんですよね？ 呼んでください」さくらは泣きそうな顔でうつむいた。",
+     walkLine:"「もう、帰っていいですか……」さくらは逃げるように部屋を出た。"}
+  ],
+  quick:[
+    {who:"kyo", t:"昨夜は何をしていた？", lie:"Y1"},
+    {who:"kyo", t:"萩の間には行った？", lie:"Y2"},
+    {who:"kyo", t:"お母さんとはどんな関係でした？", lie:null},
+    {who:"gen", t:"昨夜は何をしていた？", lie:"H1"},
+    {who:"gen", t:"帳場を離れたことは？", lie:"H2"},
+    {who:"gen", t:"閂の作りを教えてください", lie:"H3"},
+    {who:"sak", t:"昨夜は何をしていた？", lie:"G1"},
+    {who:"sak", t:"大女将はどんな人でした？", lie:null},
+    {who:"sak", t:"離れの近くで何か見なかった？", lie:null}
+  ],
+  evidence:[
+    {id:"R1", icon:"map", start:true,  name:"現場の見取り図", text:"萩の間の出入口は一つ。内側の閂は取っ手を落とすだけでかかり、内側からしか操作できない。鍵穴もない。窓は内側から施錠。出入口わきの障子の桟の上に、細いものが擦れた新しい跡がある。"},
+    {id:"R2", icon:"pc", start:true,  name:"帳場のパソコンの記録", text:"帳場のパソコンは22:31にスリープに入り、23:48まで一度も操作されていない。"},
+    {id:"R3", icon:"notebook", start:true,  name:"大女将の手帳", text:"11/21の欄：「夜、萩の間に恭介と源三。帳簿の件。明日、銀行と警察へ」。"},
+    {id:"R9", icon:"person", start:true,  name:"隣の棟の客の話", text:"22時40分ごろ、離れのほうから、陶器が割れるような音がした。"},
+    {id:"R5", icon:"shoe", start:false, name:"恭介の足袋", text:"押収した恭介の白足袋の裏に、割れた花器と同じ青磁の細かい破片が刺さっていた。花器が割れたのは犯行のときとみられる。"},
+    {id:"R8", icon:"blood", start:false, name:"羽織の袖の血痕", text:"恭介の羽織の袖口の裏に、拭き取った血の跡。大女将のDNAと一致した。"},
+    {id:"R4", icon:"thread", start:false, name:"源三の部屋の釣り糸", text:"源三の部屋のくず籠から、輪を作って結んだナイロンの釣り糸（約3m）。輪の部分に、萩の間の障子と同じ和紙の繊維が付いていた。"},
+    {id:"R7", icon:"cig", start:false, name:"庭の吸い殻", text:"萩の間に面した庭の植え込みの陰に、口紅のついた吸い殻が2本。庭師は22時に掃除を済ませている。口紅の色は、さくらの物と同じ。"},
+    {id:"R6", icon:"person", start:false, name:"さくらの証言", text:"22時40分ごろ、庭でたばこを吸っていたら、萩の間で何かが割れる音がした。22時50分ごろ、若旦那が渡り廊下を早足で母屋へ戻っていった。そのすぐあと、番頭さんが萩の間の縁側の外にしゃがみ、細い糸のようなものを引いていた。"}
+  ],
+  lies:{
+    Y1:{who:"kyo", text:"22時半から23時半まで、番頭と帳場で帳簿を見ていた", short:"番頭と帳場で帳簿を見ていた",
+        pin:"22時半から23時半まで帳場を離れず、番頭と二人でパソコンの帳簿を見ていた", pinShort:"帳場でずっとパソコンの帳簿を見ていた",
+        pinQ:"22時半から23時半まで、帳場で番頭と二人、パソコンの帳簿を見ていた。そうですね？",
+        escape:"ずっと画面を見ていたわけではない、話し込んでいた時間もある、と言い逃れる",
+        breaks:["R2","@H1"], after:null, check:{ev:null, none:"帳場の件は、パソコンの記録以上のものは出ませんでした。"}},
+    Y2:{who:"kyo", text:"少し帳場を離れたが、自分の部屋にいただけで、萩の間には行っていない", short:"自分の部屋にいた。萩の間には行っていない",
+        pin:"昨夜、萩の間には一歩も入っていない", pinShort:"昨夜、萩の間には一歩も入っていない",
+        pinQ:"昨夜、萩の間には一歩も入っていない。間違いないですね？",
+        escape:"夕方に一度、母に呼ばれて入ったことはある、夜の話ではない、と言い逃れる",
+        breaks:["R5"], after:"Y1", check:{ev:"R5", report:"恭介の身につけていた物を、鑑識に回した結果が出ました。"}},
+    Y3:{who:"kyo", text:"母と口論はしたが、手は上げていない。部屋を出たとき母は生きていた", short:"口論はしたが、手は上げていない",
+        pin:"私が萩の間を出たとき母は生きていて、私は母に一切手を上げていない", pinShort:"母には一切手を上げていない",
+        pinQ:"あなたが部屋を出たとき大女将は生きていて、あなたは一切手を上げていない。そうですね？",
+        escape:"母がつまずいて花器を倒したのかもしれない、と言い逃れる",
+        breaks:["R8"], after:"Y2", check:{ev:"R8", report:"恭介の羽織を詳しく調べ直しました。"}},
+    H1:{who:"gen", text:"22時半から23時半まで、若旦那と帳場で帳簿を見ていた", short:"若旦那と帳場で帳簿を見ていた",
+        pin:"22時半から23時半まで、若旦那と二人で紙の帳簿をめくっていた。パソコンは点けていない", pinShort:"紙の帳簿を見ていた。パソコンは点けていない",
+        pinQ:"その間、見ていたのは紙の帳簿で、パソコンは点けていない。そうですね？",
+        escape:"紙もパソコンも両方見ていた気がする、細かいことは覚えていない、と言い逃れる",
+        breaks:["@Y1"], after:null, check:{ev:null, none:"帳場の件は、パソコンの記録以上のものは出ませんでした。"}},
+    H2:{who:"gen", text:"帳場を離れたのは大浴場の見回りの間だけで、離れには行っていない", short:"見回りで大浴場に行っただけ",
+        pin:"昨夜、離れのほうには一度も近づいていない", pinShort:"昨夜、離れには一度も近づいていない",
+        pinQ:"昨夜、離れのほうには一度も近づいていない。そうですね？",
+        escape:"見回りの途中で通りかかったかもしれない、と言い逃れる",
+        breaks:["R6"], after:"H1", check:{ev:null, none:"見回りの件は、手元の記録以上のものは出ませんでした。"}},
+    H3:{who:"gen", text:"閂の細工など知らない。外から閂を落とすなどできるはずがない", short:"閂の細工など知らない",
+        pin:"昨夜、釣り糸のようなものには一切触れていない", pinShort:"糸のようなものには触れてもいない",
+        pinQ:"昨夜、釣り糸のようなものには一切触れていない。そうですね？",
+        escape:"糸など旅館にはいくらでもある、何の糸の話か分からない、と言い逃れる",
+        breaks:["R4"], after:"H2", check:{ev:"R4", report:"源三の部屋のくず籠を押さえました。"}},
+    G1:{who:"sak", text:"22時からは寮の部屋で寝ていた", short:"22時からは寮で寝ていた",
+        pin:"22時から朝まで、寮の部屋から一歩も出ていない", pinShort:"22時から朝まで寮から一歩も出ていない",
+        pinQ:"22時から朝まで、寮の部屋から一歩も出ていない。そうですね？",
+        escape:"トイレくらいは行ったかもしれない、と言い逃れる",
+        breaks:["R7"], after:null, check:{ev:"R7", report:"萩の間に面した庭を調べ直しました。"},
+        reward:{ev:"R6", report:"たばこのことがばれたさくらが、観念して、あの夜見たことを話した。"}}
+  },
+  asm:{
+    intro:"空欄を埋めて、署名を迫る。外すと時間を失う。",
+    template:"{who}は、{motive}、{time}、大女将を花器で殴った。そのあと、{room}。",
+    slots:[
+      {key:"who", label:"犯人：誰がやったのか", options:[
+        {t:"若旦那と番頭", ok:true},{t:"若旦那と仲居"},{t:"番頭と仲居"},{t:"3人全員"}]},
+      {key:"motive", label:"動機：なぜ殺したのか", options:[
+        {t:"横領を大女将に暴かれ、明日警察に話すと言われたから", ok:true},
+        {t:"旅館を売る話に反対されたから"},
+        {t:"遺産を早く手に入れたかったから"},
+        {t:"仲居との結婚に反対されたから"}]},
+      {key:"room", label:"密室：どうやって閂をかけたのか", options:[
+        {t:"釣り糸の輪を閂にかけ、障子の桟の隙間から外へ通して引き落とした", ok:true},
+        {t:"合鍵を使って、外から閂をかけた"},
+        {t:"仲居が朝、閂がかかっていたふりをした"},
+        {t:"窓から出て、外から窓の鍵をかけた"}]},
+      {key:"time", label:"時刻：大女将を殴ったのは", keep:true, options:[
+        {t:"22:30ごろ"},{t:"22:40ごろ", ok:true},{t:"22:50ごろ"},{t:"23:30ごろ"}]}
+    ]}
+};
+
+const CASES = [CASE_BIKE, CASE_T, CASE_A, CASE_B, CASE_M];
+
+/* ================= 顔（人物ごとに描き分け） ================= */
+const NECK = (w) => `<path d="M${100-w} 138 L${100-w} 168 L100 182 L${100+w} 168 L${100+w} 138Z" fill="url(#neckG)"/>`;
+const FACE_SPECS = {
+  // 三上：神経質な修復師。細面、乱れた前髪、無精ひげ、緩めたネクタイ
+  a:{sleeve:"#1f2326", skin:["#cfa688","#8b6450","#3d2a21"], ears:[57,143], stub:.7,
+     head:"M58 100 Q56 62 100 56 Q144 62 142 100 Q142 132 131 150 Q117 168 100 169 Q83 168 69 150 Q58 132 58 100Z",
+     jaw:"M62 124 Q66 158 100 168 Q134 158 138 124 Q132 146 112 150 Q100 140 88 150 Q68 146 62 124Z",
+     eye:{dx:0, dy:0, rx:7, ry:3.3, ir:2.9, tilt:0, iris:"#1c130d", sock:1, bags:.6}, brow:["#0c0907",4.6], mouth:{dy:0, c:"#1e0d09", sx:1},
+     body:`<path d="M14 220 Q22 176 70 164 L100 184 L130 164 Q178 176 186 220Z" fill="#1f2326"/>
+       <path d="M70 164 L86 198 L100 184 L114 198 L130 164 L118 158 L100 180 L82 158Z" fill="#353b40"/>
+       <path d="M96 186 L105 186 L110 220 L91 220Z" fill="#3d1010"/>` + NECK(17),
+     hair:`<path d="M53 106 Q46 58 82 45 Q104 37 127 45 Q156 58 147 106 Q144 84 134 74 Q129 87 119 77 Q113 91 103 79 Q95 92 86 79 Q77 90 70 77 Q61 88 53 106Z" fill="#0b0908"/>
+       <path d="M97 78 Q92 92 87 102" stroke="#0b0908" stroke-width="3" fill="none" stroke-linecap="round"/>
+       <path d="M108 80 Q110 92 105 100" stroke="#0b0908" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+       <path d="M78 50 Q100 42 122 50" stroke="#5a4c40" stroke-width="2" fill="none" opacity=".55"/>`},
+  // 野島：短気な運転手。角張った顎、短髪、太い眉、細い目、頬の傷、作業着
+  b:{sleeve:"#202a22", skin:["#c99874","#7d5342","#34231b"], ears:[53,147], stub:.85,
+     head:"M54 100 Q53 62 100 55 Q147 62 146 100 Q147 134 134 153 Q118 171 100 172 Q82 171 66 153 Q53 134 54 100Z",
+     jaw:"M56 126 Q60 162 100 173 Q140 162 144 126 Q138 148 114 152 Q100 142 86 152 Q62 148 56 126Z",
+     eye:{dx:-1, dy:2, rx:6.6, ry:2.3, ir:2.4, tilt:9, hood:.22, lid:3.6, iris:"#120c08", white:"#c2b493", sock:.9}, brow:["#0c0907",6.4], mouth:{dy:2, c:"#1e0d09", w:3, sx:1.18},
+     body:`<path d="M10 220 Q20 174 68 162 L100 186 L132 162 Q180 174 190 220Z" fill="#202a22"/>
+       <path d="M68 162 L80 192 L100 182 L120 192 L132 162 L120 156 L100 178 L80 156Z" fill="#323d34"/>
+       <path d="M100 184 L100 220" stroke="#7d867a" stroke-width="2"/>
+       <rect x="130" y="198" width="26" height="9" rx="1.5" fill="#3b463d"/>` + NECK(21),
+     hair:`<path d="M50 102 Q46 54 100 46 Q154 54 150 102 Q148 82 136 72 Q120 64 100 64 Q80 64 64 72 Q52 82 50 102Z" fill="#0d0b0a"/>
+       <path d="M70 70 l-1 5 M82 66 l0 5 M94 64 l0 5 M106 64 l0 5 M118 66 l0 5 M130 70 l1 5" stroke="#0d0b0a" stroke-width="2" fill="none"/>`,
+     extra:`<path d="M68 122 L80 140" stroke="#2a1713" stroke-width="1.8" opacity=".85" fill="none"/>
+       <path d="M71 124 l4 -3 M75 129 l4 -3 M79 134 l4 -3" stroke="#2a1713" stroke-width="1.2" opacity=".7" fill="none"/>
+       <path d="M91 133 Q95 137 100 136 Q105 137 109 133" stroke="#24170f" stroke-width="1.4" fill="none" opacity=".7"/>`},
+  // 小森：浅はかな大学生。丸顔、ふわっとした前髪、大きな丸い目、ひげなし、黄色いパーカー
+  c:{sleeve:"#8a6d1c", skin:["#e2bb9c","#a77c62","#4a3428"], ears:[56,144], stub:0,
+     head:"M57 102 Q56 60 100 56 Q144 60 143 102 Q144 140 126 158 Q114 168 100 168 Q86 168 74 158 Q56 140 57 102Z",
+     eye:{dx:2, dy:3, rx:7.4, ry:5.2, ir:3.8, tilt:-5, crease:true, iris:"#5a3720", hl:1.4, white:"#e4dccb", sock:.35, lid:2}, brow:["#2a1d16",3.8], mouth:{dy:-3, c:"#3a1a12", sx:.92},
+     body:`<path d="M12 220 Q20 172 70 160 Q100 176 130 160 Q180 172 188 220Z" fill="#8a6d1c"/>` + NECK(16) +
+       `<path d="M66 160 Q100 198 134 160 Q120 150 100 152 Q80 150 66 160Z" fill="#5e4912"/>
+       <path d="M92 178 L90 204 M108 178 L110 204" stroke="#cfc6ad" stroke-width="2" fill="none"/>`,
+     hair:`<path d="M51 106 Q42 50 100 42 Q158 50 149 106 Q147 88 139 80 Q135 92 125 85 Q120 95 109 87 Q101 97 92 87 Q81 95 76 85 Q66 92 62 81 Q54 90 51 106Z" fill="#2b1c14"/>
+       <path d="M70 56 Q96 44 128 54" stroke="#6b4c38" stroke-width="2" fill="none" opacity=".6"/>`,
+     extra:`<rect x="117" y="133" width="13" height="5" rx="2" fill="#d6b08a" transform="rotate(-20 123 135)"/>`},
+  // 恭介：若旦那。面長、撫でつけた髪、細い眉、切れ長の目、細い眼鏡、羽織
+  kyo:{sleeve:"#1a2232", skin:["#d6b092","#8e6853","#3b2920"], ears:[60,140], stub:.2,
+     head:"M61 98 Q60 58 100 52 Q140 58 139 98 Q140 136 128 156 Q116 172 100 173 Q84 172 72 156 Q60 136 61 98Z",
+     jaw:"M64 124 Q68 160 100 171 Q132 160 136 124 Q130 148 112 152 Q100 142 88 152 Q70 148 64 124Z",
+     eye:{dx:1, dy:-1, rx:8, ry:2.7, ir:2.6, tilt:12, lid:2, iris:"#0f0a08", sock:.6}, brow:["#120d0a",3], mouth:{dy:3, c:"#2a120d", w:2.2, sx:.82},
+     body:`<path d="M10 220 Q18 172 72 160 L100 200 L128 160 Q182 172 190 220Z" fill="#1a2232"/>` + NECK(15) +
+       `<path d="M76 160 L100 198 L124 160 L116 155 L100 186 L84 155Z" fill="#d9d4c7"/>
+       <path d="M84 155 L100 186 L116 155 L111 153 L100 176 L89 153Z" fill="#3a3f4a"/>
+       <path d="M84 204 Q100 212 116 204" stroke="#c9c2ae" stroke-width="2.6" fill="none"/>
+       <circle cx="84" cy="204" r="3" fill="#c9c2ae"/><circle cx="116" cy="204" r="3" fill="#c9c2ae"/>`,
+     hair:`<path d="M57 96 Q52 48 100 42 Q148 48 143 96 Q141 72 128 64 Q112 58 100 59 Q84 58 72 64 Q60 72 57 96Z" fill="#0e0c0b"/>
+       <path d="M70 54 Q98 44 130 52 M74 60 Q100 51 126 58" stroke="#4a4540" stroke-width="1.4" fill="none" opacity=".7"/>`,
+     eyeX:(cx) => `<rect x="${cx-11}" y="103" width="22" height="13" rx="3" fill="rgba(190,200,210,.08)" stroke="#b7bcc2" stroke-width="1.3"/>` + (cx < 100 ? `<path d="M${cx+11} 108 L${cx+15} 107" stroke="#b7bcc2" stroke-width="1.3"/>` : `<path d="M${cx-11} 108 L${cx-15} 107" stroke="#b7bcc2" stroke-width="1.3"/>`)},
+  // 源三：老番頭。薄くなった白髪、太い白眉、皺、白い口ひげ、藍の半纏
+  gen:{sleeve:"#1d2a3d", skin:["#c79f86","#86604d","#3a2820"], ears:[55,145], stub:.25,
+     head:"M56 100 Q56 60 100 55 Q144 60 144 100 Q146 134 136 152 Q120 170 100 170 Q80 170 64 152 Q54 134 56 100Z",
+     jaw:"M60 124 Q64 160 100 170 Q136 160 140 124 Q134 146 112 150 Q100 140 88 150 Q66 146 60 124Z",
+     eye:{dx:0, dy:2, rx:6, ry:2.6, ir:2.4, tilt:-11, hood:.28, iris:"#3d3630", white:"#c9bda4", sock:.75, bags:.8}, brow:["#a8a399",5.6], mouth:{dy:2, c:"#2a1510"},
+     body:`<path d="M10 220 Q16 170 70 160 L100 206 L130 160 Q184 170 190 220Z" fill="#1d2a3d"/>` + NECK(18) +
+       `<path d="M80 156 L100 194 L120 156 Z" fill="#6f685b"/>
+       <path d="M70 160 L100 206 L130 160 L121 155 L100 192 L79 155Z" fill="#2c3d57"/>
+       <path d="M75 163 L99 202 M125 163 L101 202" stroke="#c4c9d1" stroke-width="1.1" opacity=".55"/>`,
+     hair:`<path d="M55 106 Q51 80 63 68 Q67 84 65 106Z" fill="#9a958b"/><path d="M145 106 Q149 80 137 68 Q133 84 135 106Z" fill="#9a958b"/>
+       <path d="M72 64 Q100 54 128 64" stroke="#9a958b" stroke-width="1.6" fill="none" opacity=".8"/>
+       <ellipse cx="100" cy="64" rx="28" ry="8" fill="#f0d0b4" opacity=".18"/>`,
+     extra:`<path d="M78 80 Q100 76 122 80 M82 87 Q100 84 118 87" stroke="#3a261d" stroke-width="1.2" fill="none" opacity=".55"/>
+       <path d="M86 137 Q100 131 114 137 Q108 142 100 140 Q92 142 86 137Z" fill="#b3ada2"/>
+       <path d="M86 132 Q80 142 83 153 M114 132 Q120 142 117 153" stroke="#2a1a13" stroke-width="1.6" fill="none" opacity=".6"/>`,
+     eyeX:(cx) => `<path d="M${cx < 100 ? cx-9 : cx+9} 109 l${cx < 100 ? -5 : 5} -3 M${cx < 100 ? cx-9 : cx+9} 112 l${cx < 100 ? -5 : 5} 2" stroke="#3a261d" stroke-width="1" opacity=".6"/>`},
+  // 坂口：面倒くさがりのフリーター。キャップ、はみ出た茶髪、眠そうな目、ウインドブレーカー
+  sk:{sleeve:"#2f5a4a", skin:["#dcb496","#9c7258","#45302a"], ears:[58,142], stub:.35,
+     head:"M59 100 Q58 62 100 57 Q142 62 141 100 Q141 134 129 152 Q116 168 100 168 Q84 168 71 152 Q59 134 59 100Z",
+     jaw:"M63 124 Q67 158 100 167 Q133 158 137 124 Q131 146 112 150 Q100 140 88 150 Q69 146 63 124Z",
+     eye:{dx:1, dy:4, rx:7.2, ry:3.4, ir:3, tilt:-7, hood:.42, iris:"#3a2516", sock:.55, bags:.5}, brow:["#3a2414",3.6], mouth:{dy:1, c:"#2a1510"}, lid:3,
+     body:`<path d="M12 220 Q20 174 70 162 L100 184 L130 162 Q180 174 188 220Z" fill="#2f5a4a"/>` + NECK(16) +
+       `<path d="M70 162 L84 186 L100 176 L116 186 L130 162 L120 157 L100 172 L80 157Z" fill="#244a3c"/>
+       <path d="M100 178 L100 220" stroke="#9aa79f" stroke-width="2"/>`,
+     hair:`<path d="M57 98 Q50 112 58 124 M143 98 Q150 112 142 124" stroke="#7a4e26" stroke-width="5" fill="none" stroke-linecap="round"/>
+       <path d="M54 96 Q52 48 100 44 Q148 48 146 96 Q140 76 100 74 Q60 76 54 96Z" fill="#62666a"/>
+       <path d="M56 92 Q100 80 144 92 Q140 99 100 96 Q60 99 56 92Z" fill="#4d5155"/>
+       <circle cx="100" cy="46" r="3" fill="#4d5155"/>`},
+  // さくら：若い仲居。柔らかい輪郭、まとめ髪と簪、細い眉、紅、着物
+  sak:{sleeve:"#6b3f52", skin:["#e8c6ad","#ad8670","#4d372c"], ears:[61,139], stub:0,
+     head:"M61 102 Q60 60 100 56 Q140 60 139 102 Q138 136 124 154 Q112 166 100 166 Q88 166 76 154 Q62 136 61 102Z",
+     eye:{dx:1, dy:2, rx:7.4, ry:4.2, ir:3.4, tilt:5, crease:true, lash:true, iris:"#4a2a18", hl:1.2, white:"#e6dece", sock:.3}, brow:["#2a1a14",2.6], mouth:{dy:-4, c:"#8a3438", w:3, sx:.78}, lid:3,
+     back:`<circle cx="100" cy="42" r="16" fill="#24160f"/><path d="M112 34 L140 26" stroke="#c9a24a" stroke-width="2.5" stroke-linecap="round"/><circle cx="141" cy="26" r="3" fill="#d4566a"/>`,
+     body:`<path d="M14 220 Q22 176 74 164 L100 204 L126 164 Q178 176 186 220Z" fill="#6b3f52"/>` + NECK(13) +
+       `<path d="M80 162 L100 200 L120 162 L113 158 L100 188 L87 158Z" fill="#ebe5d9"/>
+       <path d="M24 212 L176 212 L178 220 L22 220Z" fill="#c9a24a"/>`,
+     hair:`<path d="M56 108 Q50 54 100 50 Q150 54 144 108 Q141 84 128 72 Q110 82 90 70 Q74 78 66 88 Q59 96 56 108Z" fill="#24160f"/>
+       <path d="M60 104 Q57 124 63 138" stroke="#24160f" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+     extra:`<ellipse cx="74" cy="128" rx="8" ry="4" fill="#c4706a" opacity=".2"/><ellipse cx="126" cy="128" rx="8" ry="4" fill="#c4706a" opacity=".2"/>`}
+};
+function eyeGroup(f, side){
+  const e = f.eye, L_ = side < 0, cx = L_ ? 82 : 118, tx = L_ ? -e.dx : e.dx, k = L_ ? "L" : "R";
+  const rx = e.rx, ry = e.ry, rot = (e.tilt || 0) * (L_ ? 1 : -1), h = e.hood || 0;
+  const top = 110 - ry * (1 - 2 * h) - 0.6, ctrl = 2 * top - 110;
+  const outer = L_ ? cx - rx : cx + rx, dir = L_ ? -1 : 1;
+  const lashes = e.lash ? `<path d="M${outer} 109.5 l${dir * 3.5} -2.2 M${outer - dir * 1.5} 107.6 l${dir * 2.8} -3 M${outer - dir * 3.5} 106.4 l${dir * 1.6} -3.2" stroke="#0c0705" stroke-width="1.2" stroke-linecap="round"/>` : "";
+  return `<g transform="translate(${tx},${e.dy})">
+    <ellipse cx="${cx}" cy="108" rx="16" ry="11" fill="url(#sock)" opacity="${e.sock == null ? 1 : e.sock}"/>
+    <g transform="rotate(${rot} ${cx} 110)">
+      <clipPath id="ec${k}"><ellipse cx="${cx}" cy="110" rx="${rx}" ry="${ry}"/></clipPath>
+      <ellipse cx="${cx}" cy="110" rx="${rx}" ry="${ry}" fill="${e.white || "#cdc3aa"}"/>
+      <g clip-path="url(#ec${k})">
+        <g class="pupil"><circle cx="${cx}" cy="110" r="${e.ir}" fill="${e.iris || "#2a1a10"}"/><circle cx="${cx}" cy="110" r="${(e.ir * .48).toFixed(2)}" fill="#050302"/><circle cx="${cx + e.ir * .35}" cy="${110 - e.ir * .35}" r="${e.hl || .8}" fill="#f1ead8"/></g>
+        ${h ? `<rect x="${cx - rx - 1}" y="${110 - ry - 1}" width="${2 * rx + 2}" height="${(2 * ry * h + 1).toFixed(2)}" fill="${f.skin[1]}"/>` : ""}
+      </g>
+      <ellipse class="blink" cx="${cx}" cy="110" rx="${rx + .7}" ry="${ry + .7}" fill="${f.skin[1]}"/>
+      <path d="M${cx - rx - 1.5} 110 Q${cx} ${ctrl.toFixed(2)} ${cx + rx + 1.5} 110" stroke="#0c0705" stroke-width="${e.lid || 2.4}" fill="none" stroke-linecap="round"/>
+      ${e.crease ? `<path d="M${cx - rx + .5} ${top - 1.6} Q${cx} ${ctrl - 3.6} ${cx + rx - .5} ${top - 1.6}" stroke="#2b1b15" stroke-width="1" fill="none" opacity=".7"/>` : ""}
+      <path d="M${cx - rx + 1} ${110 + ry * .55} Q${cx} ${110 + ry + 1.6} ${cx + rx - 1} ${110 + ry * .55}" stroke="#2b1b15" stroke-width=".9" fill="none" opacity=".55"/>
+      ${e.bags ? `<path d="M${cx - rx + 1} ${110 + ry + 2.5} Q${cx} ${110 + ry + 6.5} ${cx + rx - 1} ${110 + ry + 2.5}" stroke="#2b1b15" stroke-width="1.2" fill="none" opacity="${e.bags}"/>` : ""}
+      ${lashes}
+    </g>
+    <line id="brow${k}" x1="${L_ ? 72 : 109}" y1="97" x2="${L_ ? 91 : 128}" y2="97" stroke="${f.brow[0]}" stroke-width="${f.brow[1]}" stroke-linecap="round"/>
+    ${f.eyeX ? f.eyeX(cx) : ""}
+  </g>`;
+}
+function handsMarkup(id){
+  const f = FACE_SPECS[id] || FACE_SPECS.a, sk = f.skin[1], ln = f.skin[2], sl = f.sleeve || "#22262a";
+  return `<path d="M-6 40 L18 13 L48 13 L42 40Z" fill="${sl}"/><path d="M138 40 L114 13 L84 13 L90 40Z" fill="${sl}"/>
+    <g class="hL"><ellipse cx="47" cy="20" rx="15" ry="10" fill="${sk}"/><path d="M38 17 q9 -5 18 0 M40 23 q7 -3 14 0" stroke="${ln}" stroke-width="1.4" fill="none"/></g>
+    <g class="hR"><ellipse cx="85" cy="20" rx="15" ry="10" fill="${sk}"/><path d="M76 17 q9 -5 18 0 M78 23 q7 -3 14 0" stroke="${ln}" stroke-width="1.4" fill="none"/></g>`;
+}
+function faceThumb(id, u){
+  return `<svg viewBox="20 30 160 176" aria-hidden="true">${faceMarkup(id).replace(/id="(\w+)"/g, 'id="$1_' + u + '"').replace(/url\(#(\w+)\)/g, 'url(#$1_' + u + ')')}</svg>`;
+}
+function faceMarkup(id){
+  const f = FACE_SPECS[id] || FACE_SPECS.a, s = f.skin;
+  return `<defs>
+    <radialGradient id="skinG" cx="50%" cy="12%" r="90%"><stop offset="0" stop-color="${s[0]}"/><stop offset=".42" stop-color="${s[1]}"/><stop offset=".8" stop-color="${s[2]}"/><stop offset="1" stop-color="#1d1411"/></radialGradient>
+    <linearGradient id="neckG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#120c0a"/><stop offset="1" stop-color="${s[2]}"/></linearGradient>
+    <radialGradient id="sock" cx="50%" cy="35%" r="60%"><stop offset="0" stop-color="#0d0806" stop-opacity=".85"/><stop offset="1" stop-color="#0d0806" stop-opacity="0"/></radialGradient>
+    <filter id="blur3" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="1.8" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 .07  0 0 0 0 .05  0 0 0 0 .04  0 0 0 9 -4.4"/></filter>
+    ${f.jaw ? `<clipPath id="jaw"><path d="${f.jaw}"/></clipPath>` : ""}
+  </defs>
+  ${f.back || ""}${f.body}
+  <ellipse cx="${f.ears[0]}" cy="112" rx="6" ry="11" fill="${s[1]}" opacity=".7"/><ellipse cx="${f.ears[1]}" cy="112" rx="6" ry="11" fill="${s[2]}"/>
+  <path d="${f.head}" fill="url(#skinG)"/>
+  <path d="M66 122 Q72 138 79 150" stroke="#1e130f" stroke-width="8" opacity=".45" filter="url(#blur3)" fill="none"/>
+  <path d="M134 122 Q128 138 121 150" stroke="#1e130f" stroke-width="9" opacity=".55" filter="url(#blur3)" fill="none"/>
+  ${f.stub && f.jaw ? `<rect x="54" y="118" width="92" height="56" filter="url(#grain)" clip-path="url(#jaw)" opacity="${f.stub}"/>` : ""}
+  ${eyeGroup(f, -1)}${eyeGroup(f, 1)}
+  <path d="M102 108 L104 128 L98 133Z" fill="#2a1b15" opacity=".5" filter="url(#blur3)"/>
+  <path d="M99 110 L95 130 Q100 135 106 132" stroke="#24170f" stroke-width="1.8" fill="none" opacity=".85"/>
+  <path d="M89 134 Q85 142 87 151" stroke="#24170f" stroke-width="1.4" fill="none" opacity=".45"/>
+  <path d="M111 134 Q115 142 113 151" stroke="#24170f" stroke-width="1.4" fill="none" opacity=".45"/>
+  <g transform="translate(100,${f.mouth.dy}) scale(${f.mouth.sx || 1},1) translate(-100,0)"><path id="mouth" d="M88 145 Q100 148 112 145" fill="none" stroke="${f.mouth.c}" stroke-width="${f.mouth.w || 2.6}" stroke-linecap="round"/></g>
+  ${f.extra || ""}${f.hair}
+  <path class="sweat s1" d="M140 92 q4 7 0 10 q-4 -3 0 -10z" fill="#bfe3f2"/>
+  <path class="sweat s2" d="M60 100 q4 7 0 10 q-4 -3 0 -10z" fill="#bfe3f2"/>
+  <path class="sweat s3" d="M128 76 q4 7 0 10 q-4 -3 0 -10z" fill="#bfe3f2"/>`;
+}
+
+
+/* ================= 証拠品の絵 ================= */
+const INK = "#3a2f17";
+const IC = {
+  cctv:`<rect x="10" y="16" width="34" height="18" rx="3" transform="rotate(14 27 25)" fill="#4a4f55"/><circle cx="45" cy="31" r="5.5" fill="#1b1f23" stroke="#9aa3ab" stroke-width="2"/><path d="M20 37 L18 52 M10 53 L28 53" stroke="#4a4f55" stroke-width="4" stroke-linecap="round"/><circle cx="17" cy="21" r="2" fill="#e5493d"/>`,
+  person:`<circle cx="21" cy="26" r="8" fill="#6b5a44"/><path d="M7 54 Q9 37 21 37 Q33 37 35 54Z" fill="#6b5a44"/><path d="M36 8 h20 a4 4 0 0 1 4 4 v11 a4 4 0 0 1 -4 4 h-9 l-7 7 v-7 h-4 a4 4 0 0 1 -4 -4 v-11 a4 4 0 0 1 4 -4z" fill="#fff8e6" stroke="${INK}" stroke-width="2"/><path d="M41 15 h14 M41 20 h9" stroke="${INK}" stroke-width="2"/>`,
+  doc:`<path d="M16 7 h24 l10 10 v40 h-34z" fill="#fffaf0" stroke="${INK}" stroke-width="2"/><path d="M40 7 v10 h10" fill="none" stroke="${INK}" stroke-width="2"/><path d="M22 26 h20 M22 32 h22 M22 38 h16" stroke="${INK}" stroke-width="2"/><circle cx="41" cy="48" r="5" fill="none" stroke="#e5493d" stroke-width="2"/>`,
+  card:`<rect x="7" y="17" width="50" height="31" rx="4" fill="#f2c94c" stroke="${INK}" stroke-width="2"/><path d="M13 25 h22" stroke="${INK}" stroke-width="2"/><circle cx="19" cy="38" r="4" fill="#e5493d"/><circle cx="29" cy="38" r="4" fill="#e5493d"/><circle cx="39" cy="38" r="4" fill="#e5493d"/><circle cx="49" cy="38" r="3.5" fill="none" stroke="${INK}" stroke-width="1.5"/>`,
+  phone:`<rect x="18" y="5" width="28" height="54" rx="5" fill="#1f2326"/><rect x="21" y="11" width="22" height="40" rx="2" fill="#8fd0e8"/><path d="M24 19 h16 M24 25 h11" stroke="#fff" stroke-width="2"/><rect x="24" y="31" width="16" height="12" rx="1" fill="#fff" opacity=".7"/><circle cx="32" cy="55" r="2" fill="#6b7075"/>`,
+  vial:`<path d="M24 6 h12 M26 6 v40 a4 4 0 0 0 8 0 v-40" fill="#eaf4f7" stroke="${INK}" stroke-width="2"/><path d="M26 31 v15 a4 4 0 0 0 8 0 v-15z" fill="#c9a24a"/><circle cx="46" cy="42" r="8" fill="rgba(255,255,255,.4)" stroke="${INK}" stroke-width="2.5"/><path d="M52 48 L59 55" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>`,
+  sketch:`<rect x="10" y="8" width="44" height="34" fill="#fffaf0" stroke="${INK}" stroke-width="2"/><path d="M14 38 L26 22 L34 32 L40 26 L50 38" fill="none" stroke="${INK}" stroke-width="2"/><circle cx="44" cy="16" r="3" fill="none" stroke="${INK}" stroke-width="2"/><path d="M22 42 L15 58 M42 42 L49 58" stroke="#6b5a44" stroke-width="3"/>`,
+  tower:`<path d="M32 20 L21 58 M32 20 L43 58 M25 46 h14 M27 35 h10" stroke="${INK}" stroke-width="2.5" fill="none"/><circle cx="32" cy="16" r="3.5" fill="#e5493d"/><path d="M22 9 a13 13 0 0 0 0 14 M42 9 a13 13 0 0 1 0 14 M15 5 a20 20 0 0 0 0 22 M49 5 a20 20 0 0 1 0 22" stroke="${INK}" stroke-width="2" fill="none"/>`,
+  shoe:`<path d="M7 40 Q7 28 19 28 L33 30 Q45 21 54 33 L57 44 Q57 50 49 50 L13 50 Q7 50 7 44z" fill="#4a3f33"/><path d="M11 46 h42" stroke="#2a221a" stroke-width="2"/><circle cx="24" cy="55" r="1.8" fill="#eeeae0"/><circle cx="31" cy="57" r="1.5" fill="#eeeae0"/><circle cx="38" cy="55" r="1.8" fill="#eeeae0"/>`,
+  notebook:`<rect x="14" y="7" width="38" height="50" rx="3" fill="#8b2e2e"/><rect x="18" y="11" width="30" height="42" fill="#fffaf0"/><path d="M22 19 h20 M22 25 h22 M22 31 h16" stroke="${INK}" stroke-width="2"/><path d="M22 40 h14" stroke="#e5493d" stroke-width="2"/><path d="M10 14 h8 M10 25 h8 M10 36 h8 M10 47 h8" stroke="${INK}" stroke-width="2"/>`,
+  wrist:`<path d="M5 42 L40 24 Q51 19 57 28 Q61 37 50 41 L13 56z" fill="#c99a7a"/><path d="M25 35 l9 -7 M28 39 l9 -7 M31 43 l9 -7" stroke="#b3261e" stroke-width="2.2" stroke-linecap="round"/>`,
+  watch:`<path d="M26 4 h12 v12 h-12z M26 48 h12 v12 h-12z" fill="#6b5a44"/><circle cx="32" cy="32" r="17" fill="#fffaf0" stroke="${INK}" stroke-width="3"/><path d="M32 32 L32 21 M32 32 L41 36" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/><path d="M21 21 L43 43 M28 19 L24 30" stroke="#b3261e" stroke-width="1.5"/>`,
+  gate:`<rect x="7" y="30" width="9" height="27" fill="#4a4f55"/><path d="M16 33 L59 25" stroke="#e5493d" stroke-width="7"/><path d="M23 32 l6 -1 M36 29.6 l6 -1 M49 27.2 l6 -1" stroke="#fff" stroke-width="7"/><rect x="34" y="44" width="23" height="11" rx="2" fill="#1f2326"/><path d="M38 49.5 h15" stroke="#8fd0e8" stroke-width="2"/>`,
+  audio:`<rect x="6" y="20" width="31" height="24" rx="4" fill="#1f2326"/><circle cx="21" cy="32" r="7" fill="#3a4a5a" stroke="#9aa3ab" stroke-width="2"/><circle cx="32" cy="24" r="1.6" fill="#e5493d"/><path d="M43 24 v16 M49 17 v30 M55 26 v12" stroke="#e5493d" stroke-width="3.2" stroke-linecap="round"/>`,
+  map:`<rect x="7" y="9" width="50" height="46" fill="#fffaf0" stroke="${INK}" stroke-width="2.5"/><path d="M7 34 h22 v21 M29 9 v12 M44 9 v10 h13" stroke="${INK}" stroke-width="2" fill="none"/><path d="M35 55 h16" stroke="#e5493d" stroke-width="4"/><path d="M38 50 h10" stroke="#e5493d" stroke-width="2"/>`,
+  pc:`<rect x="7" y="9" width="50" height="33" rx="3" fill="#1f2326"/><rect x="11" y="13" width="42" height="25" fill="#2b3a4a"/><path d="M24 48 h16 l4 7 h-24z" fill="#4a4f55"/><path d="M26 21 h6 l-6 7 h6 M35 24 h5 l-5 6 h5" stroke="#8fd0e8" stroke-width="1.8" fill="none"/>`,
+  blood:`<path d="M9 12 L55 12 L51 55 L13 55z" fill="#1a2232"/><path d="M13 12 L30 30 L22 55" fill="none" stroke="#d9d4c7" stroke-width="2.5"/><path d="M38 33 q7 -4 9 2 q2 7 -5 9 q-8 2 -6 -5z" fill="#8a1c1c"/><circle cx="45" cy="47" r="1.6" fill="#8a1c1c"/>`,
+  thread:`<ellipse cx="30" cy="30" rx="21" ry="12" fill="none" stroke="#9fb7c4" stroke-width="2"/><ellipse cx="30" cy="30" rx="16" ry="9" fill="none" stroke="#9fb7c4" stroke-width="2"/><ellipse cx="30" cy="30" rx="11" ry="6" fill="none" stroke="#9fb7c4" stroke-width="2"/><path d="M51 30 Q58 43 49 54" stroke="#9fb7c4" stroke-width="2" fill="none"/><circle cx="49" cy="55" r="3.5" fill="none" stroke="${INK}" stroke-width="2"/>`,
+  cig:`<g transform="rotate(-16 24 30)"><rect x="9" y="27" width="28" height="7" rx="2" fill="#f4f1ea"/><rect x="9" y="27" width="9" height="7" rx="1" fill="#d39b5a"/><path d="M33 27 v7" stroke="#c4506a" stroke-width="3"/></g><g transform="rotate(12 40 44)"><rect x="26" y="41" width="28" height="7" rx="2" fill="#f4f1ea"/><rect x="26" y="41" width="9" height="7" rx="1" fill="#d39b5a"/><path d="M50 41 v7" stroke="#c4506a" stroke-width="3"/></g>`,
+  talk:`<path d="M7 10 h36 a4 4 0 0 1 4 4 v16 a4 4 0 0 1 -4 4 h-20 l-9 9 v-9 h-7 a4 4 0 0 1 -4 -4 v-16 a4 4 0 0 1 4 -4z" fill="#fff8e6" stroke="${INK}" stroke-width="2"/><path d="M13 18 h26 M13 25 h17" stroke="${INK}" stroke-width="2"/><circle cx="49" cy="47" r="10" fill="#b3261e"/><path d="M49 41 v7" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="49" cy="52.5" r="1.8" fill="#fff"/>`,
+  katsudon:`<path d="M22 17 q-4 -5 0 -10 M32 17 q-4 -5 0 -10 M42 17 q-4 -5 0 -10" stroke="#d6d2c8" stroke-width="2.2" fill="none" class="steam"/><path d="M7 31 h50 q-2 22 -25 22 q-23 0 -25 -22z" fill="#2c2420"/><path d="M11 31 q21 -13 42 0z" fill="#d9a441"/><path d="M19 29 l6 -6 M29 27 l6 -6 M39 27 l6 -6" stroke="#8a5a1c" stroke-width="2"/><path d="M14 30 q18 -5 36 0" stroke="#f4e3a1" stroke-width="3" fill="none"/><path d="M27 23 q5 -3 9 1" stroke="#7aa35a" stroke-width="2.5" fill="none"/><path d="M7 31 h50" stroke="#b3261e" stroke-width="2"/><path d="M14 42 h36" stroke="#b3261e" stroke-width="1.2" opacity=".7"/>`
+};
+const iconSVG = name => `<svg viewBox="0 0 64 64" aria-hidden="true">${IC[name] || IC.doc}</svg>`;
+let LINES = "";
+function speedLines(){
+  if (LINES) return LINES;
+  let d = "";
+  for (let i = 0; i < 64; i++){
+    const a = i / 64 * Math.PI * 2 + (Math.random() - .5) * .05, w = .006 + Math.random() * .018, r = 80, r0 = 14 + Math.random() * 10;
+    const x1 = 50 + Math.cos(a - w) * r, y1 = 50 + Math.sin(a - w) * r, x2 = 50 + Math.cos(a + w) * r, y2 = 50 + Math.sin(a + w) * r;
+    d += `<path d="M${(50 + Math.cos(a) * r0).toFixed(1)} ${(50 + Math.sin(a) * r0).toFixed(1)} L${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}Z" opacity="${(.08 + Math.random() * .22).toFixed(2)}"/>`;
+  }
+  return (LINES = `<svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${d}</svg>`);
+}
+
+/* ================= 本体 ================= */
+let C = null, S = null, sample = null, snd = true, beatT = null, AC = null, tts = null, voiceOn = true;
+const FAST = !!window.__fast;
+let curFace = "calm", typing = null, amb = null;
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const L = id => C.lies[id];
+const EV = id => C.evidence.find(e => e.id === id);
+const maxT = () => C.maxTurns || 30, perT = () => C.minPerTurn || 8;
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function tutSeen(){ try { return localStorage.getItem("itg_tut") === "1"; } catch(e){ return false; } }
+function tutSave(){ try { localStorage.setItem("itg_tut", "1"); } catch(e){} }
+
+/* 1人の事件も複数犯の事件も、同じ形に揃える */
+function norm(c){
+  if (c._n) return c;
+  if (!c.suspects){
+    c.suspects = [{id:"s", name:c.suspect.name, sub:c.suspect.sub, nick:c.suspect.nick, face:c.face, culprit:true,
+      persona:c.persona, rules:c.rules, truth:c.truth, opener:c.opener, lawyerLine:c.lawyerLine, walkLine:c.walkLine, heart:c.heart}];
+    Object.values(c.lies).forEach(l => { l.who = "s"; });
+    c.quick.forEach(q => { q.who = "s"; });
+  }
+  c.finals = c.finals || [c.final];
+  c.when = c.when || "あの日";
+  c.confessLen = c.confessLen || "5〜7文";
+  c.lastStand = c.lastStand || "最後の意地で「それでも、自分がやったという証拠にはならない。なぜ、どうやったのか、説明できるのか」と刑事に挑む";
+  c.multi = c.suspects.length > 1;
+  c._n = true;
+  return c;
+}
+const SP = id => C.suspects.find(s => s.id === id);
+const sus = () => SP(S.cur);
+const cs = () => S.sx[S.cur];
+
+/* ---- 読み上げ ---- */
+const VOICES = {a:["glassy",1.05,1.0], b:["rounded",1.1,0.8], c:["airy",1.12,1.15], sk:["buttery",0.92,0.95],
+                kyo:["glassy",1.0,1.05], gen:["rounded",0.88,0.75], sak:["airy",1.05,1.3]};
+const hasWebSpeech = () => typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance !== "undefined";
+function speakable(text){
+  const t = String(text).trim();
+  const m = t.match(/^「([^」]+)」/);            // 「台詞」地の文 の形なら台詞だけ
+  return (m ? m[1] : t).slice(0, 1900);
+}
+function jaVoice(){
+  try { return speechSynthesis.getVoices().find(v => /^ja/i.test(v.lang)) || null; } catch(e){ return null; }
+}
+function speak(text){
+  if (!voiceOn || !S) return;
+  const line = speakable(text); if (!line) return;
+  const v = VOICES[sus().face] || VOICES.a;
+  if (tts){
+    tts.speak(line, {voice:v[0], rate:Math.min(1.5, v[1] * 1.1), language:"ja"}).catch(e => {
+      if (e && e.code === "not_granted"){ tts = null; updateVoiceBtn(); }
+    });
+  } else if (hasWebSpeech()){
+    try {
+      const say = () => { try {
+        const u = new SpeechSynthesisUtterance(line);
+        u.lang = "ja-JP"; u.rate = Math.min(2, v[1] * 1.1); u.pitch = v[2]; u.volume = 1;
+        const jv = jaVoice(); if (jv) u.voice = jv;
+        speechSynthesis.resume(); speechSynthesis.speak(u);
+      } catch(e){} };
+      if (speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(say, 90); } else say();
+    } catch(e){}
+  }
+}
+function stopSpeak(){
+  try { if (tts) tts.stop(); } catch(e){}
+  try { if (hasWebSpeech()) speechSynthesis.cancel(); } catch(e){}
+}
+function updateVoiceBtn(){
+  const b = $("voice"), can = !!tts || hasWebSpeech();
+  b.hidden = !can; b.textContent = voiceOn ? "声 ON" : "声 OFF";
+}
+function primeSpeech(){            // 開始ボタンなど、操作の中で呼ぶ。端末の読み上げは最初の一声を操作の中で出す必要がある
+  if (tts || !hasWebSpeech()) return;
+  try {
+    speechSynthesis.cancel(); speechSynthesis.resume();
+    const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "ja-JP"; u.rate = 2;
+    speechSynthesis.speak(u);
+  } catch(e){}
+}
+function unlockSpeech(){}
+
+/* ---- 効果音 ---- */
+function ctx(){
+  if (!snd) return null;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    return AC;
+  } catch(e){ return null; }
+}
+function thump(f0, f1, d, v, delay){
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime + (delay || 0), o = a.createOscillator(), g = a.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + d);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + d + 0.05);
+}
+function burst(d, v, fc, delay){
+  const a = ctx(); if (!a) return;
+  const t = a.currentTime + (delay || 0), n = Math.floor(a.sampleRate * d), buf = a.createBuffer(1, n, a.sampleRate), ch = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  s.buffer = buf; f.type = "lowpass"; f.frequency.value = fc; g.gain.value = v;
+  s.connect(f); f.connect(g); g.connect(a.destination); s.start(t);
+}
+const sfx = {
+  hit(){ thump(420, 120, .09, .5); thump(160, 40, .5, .9); burst(.2, .45, 1600); thump(72, 38, .55, .6, .13); },
+  pin(){ thump(1000, 760, .07, .10); thump(1400, 1100, .06, .07, .06); },
+  ping(){ thump(880, 880, .12, .07); thump(1320, 1320, .18, .06, .11); },
+  beat(v){ thump(112, 60, .14, v); thump(94, 54, .18, v * .8, .17); },
+  low(){ thump(90, 45, .35, .5); },
+  whoosh(){ burst(.3, .22, 3200); },
+  tick(v){ thump(2300, 1900, .016, v || .035); },
+  type(){ thump(1700, 1400, .018, .02); },
+  door(){ thump(150, 48, .32, .7); burst(.16, .35, 700); thump(90, 40, .4, .5, .12); },
+  shatter(){ burst(.25, .3, 6000); thump(1500, 400, .16, .12); },
+  slam(){ thump(230, 55, .2, .75); burst(.09, .35, 900); }
+};
+function ambStart(){
+  const a = ctx(); if (!a || amb) return;
+  try {
+    const g = a.createGain(); g.gain.value = 0.0001; g.connect(a.destination);
+    const mk = (type, hz, vol, lp) => { const o = a.createOscillator(), gg = a.createGain(); o.type = type; o.frequency.value = hz; gg.gain.value = vol;
+      if (lp){ const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; o.connect(f); f.connect(gg); } else o.connect(gg);
+      gg.connect(g); o.start(); return gg; };
+    mk("sawtooth", 100, .22, 260);                       // 蛍光灯のうなり
+    amb = {g, d1:mk("sine", 146.8, 0), d2:mk("sine", 155.6, 0)};   // 緊張の持続音（追い詰め度で大きくなる）
+    ambSet();
+  } catch(e){ amb = null; }
+}
+function ambSet(){
+  if (!amb || !AC) return;
+  const live = snd && S && !S.over, st = live ? cs().stress : 0, t = AC.currentTime;
+  amb.g.gain.setTargetAtTime(live ? .05 : 0.0001, t, .5);
+  amb.d1.gain.setTargetAtTime(st / 100 * .8, t, .9);
+  amb.d2.gain.setTargetAtTime(Math.max(0, (st - 50) / 50) * .7, t, .9);
+}
+function beatLoop(){
+  clearTimeout(beatT);
+  if (!S || S.over) return;
+  const st = cs().stress;
+  if (snd && st >= 55 && !document.hidden) sfx.beat(0.10 + (st - 55) / 45 * 0.12);
+  beatT = setTimeout(beatLoop, Math.max(650, 1800 - st * 11));
+}
+
+/* ---- 状態 ---- */
+function newState(){
+  const sx = {};
+  C.suspects.forEach(s => { sx[s.id] = {stress:C.P.start, hist:[], met:false, fed:false}; });
+  return {
+    turn:0, cur:C.suspects[0].id, sx, busy:false, over:false, phase:"play", picking:null,
+    broken:new Set(), pinned:new Set(), escaped:new Set(), checked:new Set(),
+    owned:new Set(C.evidence.filter(e => e.start).map(e => e.id)), newEv:new Set(), pending:[],
+    claims:[], misses:0, mistakes:0, warned:false,
+    asm:{pick:{}, slots:C.asm.slots.map(s => ({key:s.key, label:s.label, options:(s.keep ? s.options.slice() : shuffle(s.options.slice()))}))},
+    tutOff:false, tutBreakShown:false
+  };
+}
+const activeLies = who => Object.entries(C.lies).filter(([id, l]) => !S.broken.has(id) && (!l.after || S.broken.has(l.after)) && (!who || l.who === who)).map(([id]) => id);
+const brokenOf = who => [...S.broken].filter(id => L(id).who === who);
+function noteLie(id){ if (!S.claims.some(c => c.lie === id)) S.claims.push({lie:id, broken:false}); }
+const chipTextById = id => S.pinned.has(id) ? L(id).pinShort : L(id).short;
+const chipText = c => chipTextById(c.lie);
+function pinLie(id){ noteLie(id); if (!S.pinned.has(id)){ S.pinned.add(id); addLine("stampline small", "言質"); sfx.pin(); } }
+function spend(n){ S.turn += n; clock(); if (n > 0) sfx.tick(maxT() - S.turn <= 5 ? .09 : .035); }
+function clock(){
+  const m = Math.max(0, (maxT() - S.turn) * perT());
+  $("clock").textContent = Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0");
+  $("clockbox").classList.toggle("low", maxT() - S.turn <= 5);
+}
+function setStress(v){
+  const st = Math.max(0, Math.min(100, v));
+  cs().stress = st;
+  $("stress").style.width = st + "%";
+  $("suspect").dataset.heat = st >= 78 ? "2" : st >= 52 ? "1" : "0";
+  $("fig").style.setProperty("--br", (4.6 - st * 0.03).toFixed(2) + "s");
+  renderTabs(); ambSet();
+}
+
+/* ---- 表情 ---- */
+const FACES = {
+  calm:   {lv:0, mouth:"M88 145 Q100 148 112 145", bl:[72,97,91,97], br:[109,97,128,97], px:0, py:0},
+  uneasy: {lv:1, mouth:"M88 146 Q100 144 112 147", bl:[72,95,91,99], br:[109,99,128,95], px:3, py:0},
+  sweat:  {lv:2, mouth:"M90 147 Q100 141 110 147", bl:[72,93,91,99], br:[109,99,128,93], px:-3, py:1},
+  angry:  {lv:3, mouth:"M86 146 L114 144", bl:[72,93,91,101], br:[109,101,128,93], px:0, py:0},
+  broken: {lv:4, mouth:"M90 150 Q100 140 110 150", bl:[72,99,91,94], br:[109,94,128,99], px:0, py:2}
+};
+function setFace(name, shake){
+  const f = FACES[name] || FACES.calm, svg = $("face");
+  curFace = name in FACES ? name : "calm";
+  svg.dataset.lv = f.lv;
+  const mo = $("mouth"); if (mo) mo.setAttribute("d", f.mouth);
+  [["browL", f.bl], ["browR", f.br]].forEach(([id, c]) => { const e = $(id); if (e){ e.setAttribute("x1", c[0]); e.setAttribute("y1", c[1]); e.setAttribute("x2", c[2]); e.setAttribute("y2", c[3]); } });
+  svg.querySelectorAll(".pupil").forEach(p => { p.style.transform = `translate(${f.px}px,${f.py}px)`; });
+  if (shake){ svg.classList.remove("shake"); void svg.getBoundingClientRect(); svg.classList.add("shake"); }
+}
+
+/* ---- 画面部品 ---- */
+function typeInto(d, text, ms){
+  let i = 0, open = false, done;
+  const p = new Promise(r => { done = r; });
+  const fin = () => {
+    clearInterval(iv); d.textContent = text;
+    const m = $("mouth"); if (m){ m.setAttribute("fill", "none"); m.setAttribute("d", (FACES[curFace] || FACES.calm).mouth); }
+    if (typing && typing.el === d) typing = null;
+    done();
+  };
+  const iv = setInterval(() => {
+    i = Math.min(text.length, i + 1);
+    d.textContent = text.slice(0, i);
+    $("log").scrollTop = 1e9;
+    const m = $("mouth");
+    if (m && i % 2 === 0){ open = !open; m.setAttribute("d", open ? "M90 143 Q100 152 110 143 Q100 146 90 143Z" : (FACES[curFace] || FACES.calm).mouth); m.setAttribute("fill", open ? "#1c0a07" : "none"); }
+    if (i >= text.length) fin();
+  }, ms);
+  typing = {el:d, finish:fin};
+  return p;
+}
+function addLine(cls, text, opt){
+  if (typing) typing.finish();
+  const d = document.createElement("div");
+  d.className = cls;
+  $("log").appendChild(d);
+  if (cls === "say sus" && !FAST) d._typed = typeInto(d, String(text), opt && opt.slow ? 75 : 32);
+  else { d.textContent = text; d._typed = Promise.resolve(); }
+  $("log").scrollTop = 1e9;
+  if (cls === "say sus") speak(opt && opt.yomi ? opt.yomi : text);
+  const items = [...$("log").children];
+  items.slice(0, Math.max(0, items.length - 6)).forEach(x => x.classList.add("old"));
+  return d;
+}
+/* 嘘の錠前：点線＝まだ出ていない嘘、灰＝出ている嘘、赤＝言質、開＝崩した */
+function lockSVG(state, bust){
+  const body = `<path d="M5 8 V5.5 a3 3 0 0 1 6 0 V8"${state === "open" ? ' transform="rotate(-30 5 8)"' : ""}/><rect x="2.5" y="8" width="11" height="8.5" rx="1.5"/><circle cx="8" cy="12.2" r="1.5"/>`;
+  return `<svg class="lk ${state}${bust ? " bust" : ""}" viewBox="0 0 16 18" aria-hidden="true">${body}${state === "open" ? '<path class="x" d="M4 10 l8 5 M12 10 l-8 5"/>' : ""}</svg>`;
+}
+function renderLocks(bustId){
+  const box = $("locks"); if (!S) return;
+  const depth = id => { let d = 0, c = L(id); while (c.after){ d++; c = L(c.after); } return d; };
+  const mine = Object.keys(C.lies).filter(id => L(id).who === S.cur).sort((a, b) => depth(a) - depth(b));
+  const act = activeLies(S.cur);
+  box.innerHTML = `<span>嘘</span>` + mine.map(id => lockSVG(S.broken.has(id) ? "open" : S.pinned.has(id) ? "pin" : act.includes(id) ? "shut" : "hidden", id === bustId)).join("");
+  box.setAttribute("aria-label", `嘘 ${brokenOf(S.cur).length}／${mine.length}`);
+}
+function renderTrophies(){
+  const box = $("trophies"); box.innerHTML = "";
+  (cs().tro || []).slice(-6).forEach(ic => { const t = el("div", "tro"); t.innerHTML = iconSVG(ic); box.append(t); });
+}
+function swingLamp(){
+  document.querySelectorAll(".lamp").forEach(l => { l.classList.remove("swing"); void l.offsetWidth; l.classList.add("swing"); });
+}
+function tell(){
+  const svg = $("face"); svg.classList.remove("tell"); void svg.getBoundingClientRect(); svg.classList.add("tell");
+  setTimeout(() => svg.classList.remove("tell"), 1100);
+  if (!S.tellHint){ S.tellHint = true; addLine("say sys", "目が泳いだ。何か隠している。"); }
+}
+function renderChips(){
+  const box = $("chips"); box.innerHTML = "";
+  const mine = S.claims.filter(c => L(c.lie).who === S.cur);
+  if (!mine.length){ box.innerHTML = '<span class="empty">まだ何も聞いていない</span>'; return; }
+  mine.forEach(c => {
+    const b = document.createElement("button"), pinned = S.pinned.has(c.lie);
+    b.type = "button";
+    b.className = "chip" + (c.broken ? " broken" : (pinned ? " pinned" : " vague"));
+    if (!c.broken){
+      b.appendChild(el("span", "tag", pinned ? "言質" : "あいまい"));
+      if (S.pending.some(p => p.lie === c.lie)) b.appendChild(el("span", "tag chk", "裏取り中"));
+    }
+    b.appendChild(document.createTextNode("「" + chipText(c) + "」"));
+    b.onclick = () => { if (!c.broken) openClaim(c); };
+    box.appendChild(b);
+  });
+  box.scrollLeft = 1e9;
+}
+function shakeTarget(){
+  if (!C.multi) return null;
+  const o = C.suspects.filter(s => s.id !== S.cur).map(s => ({s, n:brokenOf(s.id).length})).sort((a, b) => b.n - a.n)[0];
+  return o && o.n ? o.s : null;
+}
+function renderQuick(){
+  const box = $("quick"); box.innerHTML = "";
+  const mk = (txt, cls, fn, lie) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = txt; b.className = cls; b.dataset.lie = lie || "";
+    b.disabled = S.busy; b.onclick = fn; box.appendChild(b);
+  };
+  mk("黙って待つ", "wait", wait);
+  const st = shakeTarget();
+  if (st) mk(`揺さぶる「${st.nick}はもう話したぞ」`, "wait shake", shake);
+  mk("机を叩く", "slam", slamDesk);
+  if (!cs().fed) mk("カツ丼を出す", "food", katsudon);
+  activeLies(S.cur).filter(id => S.escaped.has(id) && !S.pinned.has(id)).forEach(id => mk("［言質］" + L(id).pinQ, "qpin", () => ask(L(id).pinQ, {pin:id}), id));
+  C.quick.filter(q => q.who === S.cur).forEach(q => mk(q.t, "qq", () => ask(q.t, {lie:q.lie}), q.lie));
+}
+function renderTabs(){
+  const box = $("tabs");
+  if (!C || !C.multi){ box.classList.remove("on"); box.innerHTML = ""; return; }
+  box.classList.add("on"); box.innerHTML = "";
+  C.suspects.forEach(s => {
+    const b = el("button", "tab" + (s.id === S.cur ? " cur" : "")); b.type = "button";
+    b.append(document.createTextNode(s.nick));
+    const m = el("span", "m"), i = el("i"); i.style.width = S.sx[s.id].stress + "%"; m.append(i); b.append(m);
+    const nb = brokenOf(s.id).length; if (nb) b.append(el("span", "x", "×" + nb));
+    b.disabled = S.busy; b.onclick = () => switchTo(s.id);
+    box.append(b);
+  });
+}
+function lock(on){
+  S.busy = on;
+  ["send", "evbtn", "chkbtn", "q", "finalbtn"].forEach(id => { $(id).disabled = on; });
+  $("quick").querySelectorAll("button").forEach(b => { b.disabled = on; });
+  $("tabs").querySelectorAll("button").forEach(b => { b.disabled = on; });
+}
+function updateEvDot(){ $("evdot").classList.toggle("on", S.newEv.size > 0); }
+function quickFor(id){ const q = C.quick.find(x => x.lie === id); return q ? q.t : ""; }
+function tutHint(){
+  if (!S || !C.tut || S.tutOff || S.phase !== "play" || S.over) return null;
+  const t = C.tut, id = t.lie;
+  if (S.broken.has(id)) return {text:"これが基本の流れ：言質 → 証拠 → 矛盾。証拠が足りなければ「裏取り」。", glow:"chk"};
+  if (S.pinned.has(id)) return {text:"言質が取れた。同じ証拠をもう一度。", glow:"ev"};
+  if (S.escaped.has(id)) return {text:"言い逃れされた。「いつ・どこ・何回」を言い切らせろ。", glow:"pin"};
+  if (S.claims.some(c => c.lie === id)) return {text:`証拠「${EV(t.ev).name}」を、この証言に突きつけろ。`, glow:"ev"};
+  return {text:`まず「${quickFor(id)}」と聞いてみよう。`, glow:"quick"};
+}
+function updateHint(){
+  document.querySelectorAll(".glow").forEach(e => e.classList.remove("glow"));
+  const hb = $("hintbar"), h = tutHint();
+  if (!h){ hb.style.display = "none"; return; }
+  hb.style.display = "flex"; hb.querySelector("span").textContent = h.text;
+  const tgt = h.glow === "ev" ? $("evbtn") : h.glow === "chk" ? $("chkbtn") : h.glow === "pin" ? document.querySelector(".qpin") : document.querySelector('.qq[data-lie="' + C.tut.lie + '"]');
+  if (tgt) tgt.classList.add("glow");
+}
+
+/* ---- 取調室の移動 ---- */
+function enterRoom(){
+  const sp = sus(), svg = $("face");
+  svg.innerHTML = faceMarkup(sp.face); svg.setAttribute("aria-label", "容疑者 " + sp.name);
+  const np = $("nameplate"); np.textContent = ""; np.append(el("b", "", sp.name), document.createTextNode(sp.sub));
+  $("hands").innerHTML = handsMarkup(sp.face);
+  svg.style.setProperty("--bl", (3.6 + Math.random() * 3).toFixed(1) + "s");
+  $("suspect").classList.remove("fallen");
+  setStress(cs().stress); setFace("calm"); renderLocks(); renderTrophies();
+  if (C.multi) addLine("say sys", `── ${sp.nick}の取調室 ──`);
+  if (!cs().met){ cs().met = true; addLine("say sus", sp.opener); cs().hist.push({who:"sus", text:sp.opener}); }
+}
+function switchTo(id){
+  if (!S || S.busy || S.over || S.phase !== "play" || id === S.cur) return;
+  stopPick(); stopSpeak(); S.cur = id;
+  enterRoom();
+  renderChips(); renderQuick(); updateHint(); renderTabs();
+}
+
+/* ---- AI呼び出し ---- */
+function persona(){
+  const sp = sus(), act = activeLies(S.cur), br = brokenOf(S.cur);
+  let partner = "";
+  if (C.multi && sp.culprit){
+    partner = C.suspects.filter(s => s.id !== sp.id && s.culprit).map(o => {
+      const n = brokenOf(o.id).length;
+      return n ? `・共犯の${o.nick}は、刑事に嘘の一部をすでに認めたらしい。自分だけ罪をかぶるのを恐れ、${o.nick}に罪をなすりつけたくなっている。`
+               : `・共犯の${o.nick}のことを聞かれたら庇う。`;
+    }).join("\n") + "\n";
+  }
+  return `${sp.persona}
+${sp.truth}
+
+いま使ってよい嘘（関係する質問をされたら、この嘘で答える。言い回しは自由）：
+${act.map(id => `${id}: ${L(id).text}\n　　言質の条件＝「${L(id).pin}」／状態＝${S.pinned.has(id) ? "すでに言い切った（撤回できない。聞かれたら同じことを繰り返す）" : "まだ言い切っていない"}`).join("\n") || "なし"}
+すでに証拠で崩された嘘（二度と言わない。崩れた事実は渋々認めた前提で話す）：
+${br.map(id => `${id}: ${L(id).text}`).join("\n") || "なし"}
+
+ルール：
+・真相のうち、崩された嘘で認めた範囲より先は絶対に自分から言わない。証拠なしでは認めない。
+・「まだ言い切っていない」嘘は、あいまいに話す。時刻・回数・「一度も」「ずっと」のような言い切りを避け、「たぶん」「そのくらい」でぼかす。ただし刑事が言質の条件と同じ内容を「〜ということですね？」とはっきり確認してきたら、ぼかすと怪しまれるので、その内容をそのまま言い切る。一つの質問で複数の言質の条件をまとめて確認されたら、確認された分はそれぞれ言い切る。聞かれていないのに自分から言い切ることはしない。
+・上に無い新しい嘘は作らない。答えたくない質問ははぐらかすか、本当のこと（当たり障りのない事実）を言う。
+・刑事の理詰めが的確なら動揺し、見当違いなら余裕を見せる。
+・いまの追い詰め度は${cs().stress}/100。高いほど動揺が言葉に出る。
+${sp.rules ? sp.rules + "\n" : ""}${partner}・返答は1〜2文、50字以内。短く。地の文やト書きは書かない。`;
+}
+function histText(){
+  return cs().hist.slice(-8).map(h => (h.who === "det" ? "刑事：" : sus().nick + "：") + h.text).join("\n");
+}
+async function callJSON(prompt){
+  if (!sample) throw {code:"unavailable"};
+  return await sample.json(prompt, {modelTier:"quick", cache:false});
+}
+const safe = p => p.then(v => ({ok:true, v:(v && typeof v === "object") ? v : {}}), e => ({ok:false, e}));
+function replyJob(situation){
+  return safe(callJSON(`${persona()}
+
+これまでのやりとり：
+${histText() || "（なし）"}
+
+状況：${situation}
+${sus().nick}の返答をJSONだけで返す（前置き・コードブロック禁止）：{"reply":"台詞（1〜2文、50字以内）","yomi":"replyの全文をひらがなの読みに直したもの（漢字は使わない。句読点はそのまま。文脈に合う読みを選ぶこと。例：「行ったことある」は「いったことある」と読む）","face":"calm|uneasy|sweat|angry|broken"}`));
+}
+function errMsg(e){
+  const code = e && e.code;
+  if (code === "unavailable") return "この画面ではAIを呼べない。公開ページから開くと取り調べられる。";
+  if (code === "not_granted") return "AIの利用が許可されなかったため、取調べを続けられない。";
+  if (code === "rate_limited") return "相手が黙り込んだ（混み合っている）。少し待ってからもう一度。";
+  return "相手が答えなかった。もう一度聞いてみよう。";
+}
+function sayReply(res, fallbackFace){
+  if (res.ok){
+    const reply = String(res.v.reply || "……");
+    addLine("say sus", reply, {yomi: res.v.yomi ? String(res.v.yomi) : null}); cs().hist.push({who:"sus", text:reply});
+    const f = res.v.face; setFace(f in FACES ? f : fallbackFace);
+  } else addLine("say sys", errMsg(res.e));
+}
+
+/* ---- 演出 ---- */
+function quake(){ const a = $("app"); a.classList.remove("quake"); void a.offsetWidth; a.classList.add("quake"); }
+async function cutin(icon, say, outcome, sub, bigText){
+  const c = $("cutin");
+  c.className = "cutin on" + (outcome === "hit" ? " hit" : "");
+  c.innerHTML = speedLines() + `<div class="say"></div><div class="item">${iconSVG(icon)}</div><div class="bigwrap"><div class="big">${bigText || "矛盾"}</div></div><div class="sub"></div>`;
+  c.querySelector(".say").textContent = say;
+  const item = c.querySelector(".item"), big = c.querySelector(".big"), sb = c.querySelector(".sub");
+  sfx.whoosh();
+  await sleep(260);
+  item.classList.add("slam"); sfx.slam(); quake();
+  await sleep(430);
+  if (outcome === "hit" || outcome === "sign"){
+    big.classList.add("on"); sfx.hit(); quake(); swingLamp();
+    const fl = $("flash"); fl.classList.remove("on"); void fl.offsetWidth; fl.classList.add("on");
+    await sleep(950);
+  } else if (outcome === "escape"){
+    sb.textContent = "……それが、何か？"; sb.classList.add("on"); item.classList.add("deflect");
+    await sleep(850);
+  } else if (outcome === "refuse"){
+    sb.textContent = "……こんな調書に、署名はできない。"; sb.classList.add("on"); item.classList.add("deflect");
+    await sleep(900);
+  } else if (outcome === "miss"){
+    sb.textContent = "……的外れだ。"; sb.classList.add("on"); item.classList.add("fizzle");
+    await sleep(750);
+  } else {
+    sb.textContent = sub || ""; sb.classList.add("on");
+    await sleep(1400);
+  }
+  c.className = "cutin"; c.innerHTML = "";
+}
+function itemToast(evId){
+  const ev = EV(evId); if (!ev) return;
+  const t = el("div", "toast"); t.innerHTML = iconSVG(ev.icon); t.append(document.createTextNode("入手：" + ev.name));
+  $("app").append(t); setTimeout(() => t.remove(), 2100);
+}
+async function impact(){
+  const fig = $("fig"), fl = $("flash");
+  fig.classList.remove("zoom"); void fig.offsetWidth; fig.classList.add("zoom");
+  setFace("sweat", true);
+  addLine("stampline", "矛盾");
+  await sleep(500);
+  fig.classList.remove("zoom");
+}
+
+/* ---- 行動：質問 ---- */
+async function ask(q, meta){
+  meta = meta || {};
+  if (!S || S.busy || S.over || S.phase !== "play" || !String(q).trim()) return;
+  lock(true); spend(1);
+  addLine("say det", q); cs().hist.push({who:"det", text:q});
+  const w = addLine("say sus wait", "……");
+  setFace("uneasy");
+  const pinHint = meta.pin ? `\n（この質問は「${L(meta.pin).pin}」という言質の条件を確認するもの。${sus().nick}はその内容をはっきり言い切って答える）` : "";
+  const res = await safe(callJSON(`${persona()}
+
+これまでのやりとり：
+${histText() || "（なし）"}
+
+刑事の今の発言：「${q}」${pinHint}
+
+${sus().nick}としての返答をJSONだけで返す（前置きやコードブロック禁止）：
+{"reply":"台詞","lie":"今の台詞で使った嘘のID（使ってよい嘘のどれか）。使っていなければ null","pinned":["今の台詞で、『言質の条件』の内容をはっきり言い切った嘘のIDをすべて（複数可）。なければ空の配列"],"face":"calm|uneasy|sweat|angry|broken のどれか","pressure":刑事の発言がどれだけ核心を突いたか -2〜10 の整数}`));
+  w.remove();
+  if (res.ok){
+    const r = res.v, reply = String(r.reply || "……");
+    addLine("say sus", reply); cs().hist.push({who:"sus", text:reply});
+    const act = activeLies(S.cur);
+    if (meta.lie && act.includes(meta.lie)) noteLie(meta.lie);
+    if (act.includes(r.lie)) noteLie(r.lie);
+    const pins = [].concat(r.pinned || []).filter(id => act.includes(id));
+    if (meta.pin && act.includes(meta.pin) && !pins.includes(meta.pin)) pins.push(meta.pin);
+    pins.forEach(pinLie);
+    if (pins.length >= 2) addLine("say sys", `一度に${pins.length}つ言質を取った。`);
+    const lied = (meta.lie && act.includes(meta.lie)) || act.includes(r.lie);
+    if (lied && !pins.length) tell();
+    setStress(cs().stress + Math.max(-2, Math.min(10, parseInt(r.pressure, 10) || 0)));
+    setFace(r.face in FACES ? r.face : "calm");
+  } else {
+    spend(-1); cs().hist.pop();
+    addLine("say sys", errMsg(res.e));
+    if (res.e && res.e.code === "not_granted") S.over = true;
+  }
+  afterAction();
+}
+
+/* ---- 行動：沈黙 ---- */
+async function wait(){
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  lock(true); spend(1);
+  addLine("say det", "（何も言わず、相手を見つめる）");
+  cs().hist.push({who:"det", text:`（刑事は黙ったまま、じっと${sus().nick}を見ている）`});
+  const target = cs().stress >= C.P.blurt ? activeLies(S.cur).find(id => !S.pinned.has(id)) : null;
+  const situation = target
+    ? `沈黙に耐えられなくなり、聞かれてもいないのに自分から喋り出す。その中で「${L(target).pin}」とはっきり言い切ってしまう。`
+    : `沈黙を平然とやり過ごす。「もう帰っていいですか」などと余裕を見せる。新しい事実は何も言わない。`;
+  const w = addLine("say sus wait", "……");
+  const res = await replyJob(situation);
+  w.remove();
+  if (res.ok){
+    sayReply(res, "calm");
+    if (target){ pinLie(target); setFace("sweat"); } else { setStress(cs().stress - 3); setFace("calm"); }
+  } else { spend(-1); cs().hist.pop(); addLine("say sys", errMsg(res.e)); }
+  afterAction();
+}
+
+/* ---- 行動：揺さぶり（複数犯） ---- */
+async function shake(){
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  const o = shakeTarget(); if (!o) return;
+  lock(true); spend(1);
+  addLine("say det", `「${o.nick}は、もう話し始めたぞ」`);
+  cs().hist.push({who:"det", text:`（刑事は「${o.nick}はもう話し始めた」と告げた）`});
+  const target = cs().stress >= C.P.shake ? activeLies(S.cur).find(id => !S.pinned.has(id)) : null;
+  const situation = target
+    ? (sus().culprit
+        ? `${o.nick}が話し始めたと聞いて激しく動揺する。自分だけ罪をかぶるのを恐れ、${o.nick}を悪く言いながら、その勢いで「${L(target).pin}」とはっきり言い切ってしまう。`
+        : `${o.nick}が話し始めたと聞いて、自分まで疑われるのではとおびえる。必死に弁解するうちに「${L(target).pin}」とはっきり言い切ってしまう。`)
+    : `${o.nick}が話し始めたと聞いて動揺するが、なんとか取り繕って否定する。新しいことは何も言わない。`;
+  const w = addLine("say sus wait", "……");
+  const res = await replyJob(situation);
+  w.remove();
+  if (res.ok){
+    sayReply(res, "uneasy");
+    if (target){ pinLie(target); setFace("sweat"); } else setStress(cs().stress + 4);
+  } else { spend(-1); cs().hist.pop(); addLine("say sys", errMsg(res.e)); }
+  afterAction();
+}
+
+/* ---- 行動：机を叩く ---- */
+async function slamDesk(){
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  const st = cs();
+  lock(true); spend(1); st.slams = (st.slams || 0) + 1;
+  addLine("say det", "（机を叩く）「いい加減にしろ！」");
+  st.hist.push({who:"det", text:"（刑事は机を強く叩き、「いい加減にしろ」と怒鳴った）"});
+  quake(); sfx.slam(); sfx.hit(); swingLamp(); setFace("sweat", true);
+  if (st.slams >= 3){
+    addLine("say sys", "やりすぎた。");
+    S.misses = C.P.lawyerAt;            // 共通処理の中で弁護士が呼ばれる
+    return afterAction();
+  }
+  setStress(st.stress + (C.P.miss > 0 ? 14 : 10));
+  const target = st.stress >= C.P.blurt ? activeLies(S.cur).find(id => !S.pinned.has(id)) : null;
+  const situation = target
+    ? `机を叩かれて飛び上がる。動揺のあまり、つい「${L(target).pin}」と言い切ってしまう。`
+    : "机を叩かれて一瞬ひるむが、すぐに取り繕い、乱暴な取調べに抗議する。新しいことは言わない。";
+  const w = addLine("say sus wait", "……");
+  const res = await replyJob(situation);
+  w.remove();
+  if (res.ok){ sayReply(res, "sweat"); if (target) pinLie(target); }
+  else addLine("say sys", errMsg(res.e));
+  if (st.slams === 2) addLine("say sys", "次に叩けば、弁護士を呼ばれる。");
+  afterAction();
+}
+
+/* ---- 行動：カツ丼（情に訴える） ---- */
+async function katsudon(){
+  if (!S || S.busy || S.over || S.phase !== "play" || cs().fed) return;
+  lock(true); spend(1); cs().fed = true;
+  const sp = sus(), heart = sp.heart || "家族のこと、思い出してみろ";
+  addLine("say det", `（カツ丼を出す）「${heart}」`);
+  cs().hist.push({who:"det", text:`（刑事はカツ丼を差し出し、「${heart}」と情に訴えた）`});
+  const soft = cs().stress >= C.P.blurt - 20;
+  const target = soft ? activeLies(S.cur).find(id => !S.pinned.has(id)) : null;
+  const situation = target
+    ? `差し出されたカツ丼と刑事の言葉に、こらえていたものが崩れる。箸を持つ手が震え、涙ぐみ、ぽつりと本音が漏れる。その流れで「${L(target).pin}」と言い切ってしまう。真相そのものはまだ言わない。`
+    : soft ? "カツ丼を前に涙ぐむが、もう言えることはないと黙って頭を下げる。"
+           : "カツ丼には手をつけず、「そういう手には乗りませんよ」と突っぱねる（口調は自分らしく）。";
+  const job = replyJob(situation);
+  await cutin("katsudon", "腹、減ってるだろ。食えよ。", "food", `「${heart}」`);
+  const w = addLine("say sus wait", "……");
+  const res = await job;
+  w.remove();
+  if (res.ok){
+    sayReply(res, target ? "broken" : "calm");
+    if (target){ pinLie(target); setStress(cs().stress + 6); setFace("broken"); }
+    else if (!soft){ setStress(cs().stress - 5); addLine("say sys", "まだ早かった。もっと追い詰めてから。"); }
+  } else { addLine("say sys", errMsg(res.e)); }
+  afterAction();
+}
+
+/* ---- 行動：証拠を突きつける ---- */
+async function present(ev, claim){
+  stopPick();
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  if (L(claim.lie).who !== S.cur) return;
+  lock(true); spend(1);
+  const lie = L(claim.lie), nick = sus().nick;
+  addLine("say det", `（${ev.name}を突きつける）`);
+  cs().hist.push({who:"det", text:`（証拠「${ev.name}：${ev.text}」を見せ、${nick}の「${chipText(claim)}」と矛盾すると指摘）`});
+  const match = lie.breaks.includes(ev.id);
+  const hit = match && S.pinned.has(claim.lie);
+  const escaped = match && !hit;
+  const tutLie = C.tut && !S.tutOff && claim.lie === C.tut.lie;
+  let next = null, finale = false, roomDone = false, situation;
+  if (hit){
+    claim.broken = true; S.broken.add(claim.lie); S.misses = 0;
+    next = activeLies().find(id => L(id).after === claim.lie) || null;
+    finale = C.finals.every(id => S.broken.has(id));
+    roomDone = !finale && C.finals.includes(claim.lie);
+    setStress(cs().stress + C.P.hit);
+    renderChips();
+    situation = finale
+      ? `最後の嘘「${lie.text}」が証拠で崩れた。もう逃げ場はなく、観念しかけている。ただし最後の意地で、${C.lastStand}。真相はまだ何も認めない。`
+      : `この証拠で嘘「${lie.text}」は崩れた。うろたえて、その部分は認める。${next && L(next).who === S.cur ? `ただし苦しい言い訳として次の嘘「${L(next).text}」に後退する。` : "それ以上のことは認めず、黙り込むか話をそらす。"}`;
+  } else if (escaped){
+    S.escaped.add(claim.lie); if (!tutLie) S.mistakes++;
+    setStress(cs().stress + C.P.esc); spend(1); setFace("calm");
+    situation = `この証拠は痛いところを突いているが、${nick}はまだ「${lie.pin}」とは言い切っていなかったので逃げ道がある。${lie.escape}。嘘そのものは認めない。少し得意げに、長めに喋る。`;
+  } else {
+    S.misses++; S.mistakes++;
+    setStress(cs().stress + C.P.miss); setFace(C.P.miss > 0 ? "angry" : "calm");
+    situation = `この証拠はその証言と矛盾しない（見当違い）。${C.P.miss > 0 ? "苛立ち、声を荒げて刑事の指摘の的外れさを責める。" : "余裕を取り戻し、刑事の指摘の弱さを突く。"}`;
+  }
+  const job = replyJob(situation);
+  const SAYS = ["これを見ろ！", "これはどう説明する！", "言い逃れはできないぞ！"];
+  await cutin(ev.icon || "talk", SAYS[Math.floor(Math.random() * SAYS.length)], hit ? "hit" : escaped ? "escape" : "miss");
+  if (hit) await impact();
+  const w = addLine("say sus wait", "……");
+  const res = await job;
+  w.remove();
+  sayReply(res, hit ? "sweat" : escaped ? "calm" : (C.P.miss > 0 ? "angry" : "calm"));
+  if (hit){
+    (cs().tro = cs().tro || []).push(ev.icon || "talk"); renderTrophies();
+    renderLocks(claim.lie); sfx.shatter();
+  }
+  if (hit && next) noteLie(next);
+  if (hit && lie.reward && !S.owned.has(lie.reward.ev)){
+    S.owned.add(lie.reward.ev); S.newEv.add(lie.reward.ev);
+    addLine("say report", `${lie.reward.report}\n→「${EV(lie.reward.ev).name}」入手`); itemToast(lie.reward.ev);
+  }
+  if (roomDone) addLine("say sys", `${nick}の嘘はもう残っていない。`);
+  if (escaped) addLine("say sys", "言い逃れされた。先に言質を取れ。");
+  else if (!match) addLine("say sys", "空振り。");
+  if (finale) enterFinal();
+  afterAction();
+}
+
+/* ---- 行動：裏取り ---- */
+function orderCheck(id){
+  closeFolder();
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  S.checked.add(id);
+  spend(1);
+  addLine("say det", `（「${chipTextById(id)}」の裏取りを指示）`);
+  S.pending.push({lie:id, due:S.turn + 2});
+  addLine("say sys", "結果は2手後。");
+  afterAction();
+}
+function deliver(){
+  const due = S.pending.filter(p => p.due <= S.turn);
+  if (!due.length) return;
+  S.pending = S.pending.filter(p => p.due > S.turn);
+  due.forEach(p => {
+    const ck = L(p.lie).check || {};
+    if (ck.ev && !S.owned.has(ck.ev)){
+      S.owned.add(ck.ev); S.newEv.add(ck.ev);
+      addLine("say report", `【報告】→「${EV(ck.ev).name}」入手`); itemToast(ck.ev);
+    } else {
+      addLine("say report", "【報告】新しい証拠なし");
+    }
+  });
+  sfx.ping();
+}
+
+/* ---- 行動のあとの共通処理 ---- */
+function lowWarn(){
+  if (C.P.miss >= 0) return;
+  if (cs().stress <= 12 && !S.warned){ S.warned = true; addLine("say sys", "相手に余裕が戻っている。席を立たれるぞ。"); }
+  else if (cs().stress > 22) S.warned = false;
+}
+async function lawyer(){
+  S.mistakes++;
+  addLine("say sys", "——中断——");
+  S.lawyerN = (S.lawyerN || 0) + 1;
+  const n = S.lawyerN;
+  const w = addLine("say sus wait", "……");
+  const situation = n <= 1
+    ? "刑事の追及にたまりかね、弁護士を呼んでほしいと言い出す。自分の口調らしく。まだ少し余裕は残っている。"
+    : `また追及が空振りし、弁護士の話を出すのは今回で${n}回目。前回までと違う言い回しで、うんざりした様子で弁護士を呼ぶよう求める。`;
+  let res = null;
+  try { res = await replyJob(situation); } catch(e){}
+  w.remove();
+  if (res && res.ok) sayReply(res, "angry");
+  else addLine("say sus", sus().lawyerLine);
+  addLine("say sys", "時間を大きく失った。");
+  sfx.low();
+  spend(3); S.misses = 0;
+  setStress(C.P.miss < 0 ? Math.max(cs().stress, C.P.afterLawyer) : C.P.afterLawyer);
+  setFace("calm");
+}
+function walkout(){
+  S.over = true; lock(true);
+  addLine("say sus", sus().walkLine);
+  sfx.low();
+  setTimeout(() => ending("walk"), 1800);
+}
+function checkTime(){
+  if (S.over) return;
+  if (S.turn >= maxT()){
+    S.over = true; lock(true);
+    addLine("say sys", "取調べの時間が尽きた。");
+    setTimeout(() => ending("time"), 1500);
+  }
+}
+async function afterAction(){
+  deliver();
+  if (!S.over && S.phase === "play"){
+    lowWarn();
+    if (S.misses >= C.P.lawyerAt) await lawyer();
+    else if (cs().stress <= 0 && C.P.miss < 0) return walkout();
+  }
+  if (C.tut){
+    if (S.tutBreakShown){ S.tutOff = true; tutSave(); }
+    if (S.broken.has(C.tut.lie)) S.tutBreakShown = true;
+  }
+  lock(false);
+  renderChips(); renderQuick(); updateHint(); updateEvDot(); renderTabs(); renderLocks();
+  checkTime();
+}
+
+/* ---- シート（証拠・裏取り） ---- */
+function newFolder(extra){ const f = $("folder"); f.className = "folder" + (extra ? " " + extra : ""); f.innerHTML = ""; return f; }
+function showFolder(){ $("sheet").classList.add("on"); }
+function closeFolder(){ $("sheet").classList.remove("on"); }
+function evItems(){
+  const items = C.evidence.filter(e => S.owned.has(e.id)).map(e => ({...e}));
+  if (C.multi) [...S.pinned].filter(id => L(id).who !== S.cur).forEach(id => {
+    const nick = SP(L(id).who).nick;
+    items.push({id:"@" + id, icon:"talk", name:`${nick}の言質`, text:`${nick}が言い切ったこと：「${L(id).pin}」`, talk:true});
+  });
+  return items;
+}
+function flowHead(ev, text){
+  const h = el("div", "flow"), fi = el("div", "fi"), ft = el("div", "ft");
+  fi.innerHTML = iconSVG(ev.icon); ft.append(el("b", "", ev.name), document.createTextNode(text));
+  h.append(fi, el("span", "arrow", "→"), ft);
+  return h;
+}
+function claimCard(c, onPick){
+  const pinned = S.pinned.has(c.lie);
+  const b = el("button", "claim-card" + (pinned ? " pinned" : "")); b.type = "button";
+  b.append(document.createTextNode("「" + chipText(c) + "」"), el("small", "", pinned ? "言質あり：崩せる" : "あいまい：言い逃れされるかもしれない"));
+  b.onclick = onPick;
+  return b;
+}
+function openEv(claim){
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  if (claim && claim.type) claim = null;                       // ボタンのクリックイベントが渡ってきた場合
+  const f = newFolder();
+  f.append(el("h3", "", claim ? "どの証拠を突きつける？" : `証拠品（${S.owned.size}／${C.evidence.length}）`),
+           el("p", "hint", claim ? "「" + chipText(claim) + "」と矛盾する証拠を選ぶ" : "タップで詳しく見る" + (S.owned.size < C.evidence.length ? "。まだ手に入っていない証拠がある" : "")));
+  const g = el("div", "ev-grid");
+  evItems().forEach(ev => {
+    const b = el("button", "ev-tile" + (ev.talk ? " talk" : "")); b.type = "button";
+    b.innerHTML = iconSVG(ev.icon); b.append(el("span", "", ev.name));
+    if (S.newEv.has(ev.id)) b.append(el("span", "new", "NEW"));
+    b.onclick = () => showEv(ev, claim);
+    g.append(b);
+  });
+  f.append(g);
+  S.newEv.clear(); updateEvDot();
+  showFolder();
+}
+function showEv(ev, claim){
+  const f = newFolder();
+  const back = el("button", "ev-back", "← 証拠品の一覧"); back.type = "button"; back.onclick = () => openEv(claim);
+  const big = el("div", "ev-big"); big.innerHTML = iconSVG(ev.icon);
+  const go = el("button", "ev-present", claim ? "この証言に突きつける" : "これを突きつける"); go.type = "button";
+  go.onclick = () => { if (claim){ closeFolder(); present(ev, claim); } else chooseClaim(ev); };
+  f.append(back, big, el("h3", "c", ev.name), el("p", "ev-detail", ev.text));
+  if (claim) f.append(el("p", "hint", "突きつける相手：「" + chipText(claim) + "」"));
+  f.append(go);
+}
+function chooseClaim(ev){
+  const f = newFolder();
+  const back = el("button", "ev-back", "← 証拠を選び直す"); back.type = "button"; back.onclick = () => showEv(ev);
+  f.append(back, el("h3", "", "どの証言に突きつける？"), flowHead(ev, "と矛盾する証言を選ぶ"));
+  const mine = S.claims.filter(c => !c.broken && L(c.lie).who === S.cur);
+  if (!mine.length) f.append(el("p", "hint", "まだ証言がない。先に質問して、喋らせよう。"));
+  mine.forEach(c => f.append(claimCard(c, () => { closeFolder(); present(ev, c); })));
+}
+function openClaim(c){
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  const f = newFolder(), pinned = S.pinned.has(c.lie), pend = S.pending.find(p => p.lie === c.lie), done = S.checked.has(c.lie);
+  f.append(el("h3", "", "この証言をどうする？"), claimCard(c, () => {}));
+  const a1 = el("button", "act red", "証拠を突きつける"); a1.type = "button"; a1.onclick = () => openEv(c);
+  const a2 = el("button", "act", pend ? "裏取り中…" : done ? "裏取り済み" : pinned ? "部下に裏を取らせる（2手後に報告）" : "裏取りは言質を取ってから");
+  a2.type = "button"; a2.disabled = !!pend || done || !pinned || S.pending.length >= 2; if (!a2.disabled) a2.onclick = () => orderCheck(c.lie);
+  f.append(a1, a2);
+  if (!pinned) f.append(el("p", "hint", "点線の証言はあいまい。「いつ・どこ・何回」を質問で言い切らせると、赤枠（言質）になる。"));
+  showFolder();
+}
+function openChk(){
+  if (!S || S.busy || S.over || S.phase !== "play") return;
+  const f = newFolder();
+  f.append(el("h3", "", "裏取り"), el("p", "hint", "部下に証言の裏を調べさせる。結果は2手後に届く。調べられるのは、言質を取った証言だけ。部下は同時に2人まで。"));
+  const open = S.claims.filter(c => !c.broken);
+  if (!open.length) f.append(el("p", "hint", "まだ調べる証言がない。"));
+  open.forEach(c => {
+    const pinned = S.pinned.has(c.lie), pend = S.pending.find(p => p.lie === c.lie), done = S.checked.has(c.lie);
+    let st, can = false;
+    if (pend) st = `調査中…（あと${Math.max(1, pend.due - S.turn)}手）`;
+    else if (done) st = "確認済み";
+    else if (!pinned) st = "あいまいな証言は調べられない。先に言質を。";
+    else if (S.pending.length >= 2) st = "部下は手一杯だ。";
+    else { st = "この証言の裏を取らせる"; can = true; }
+    const who = C.multi ? SP(L(c.lie).who).nick + "：" : "";
+    const b = el("button", "ev-card"); b.type = "button";
+    b.append(el("b", "", who + "「" + chipText(c) + "」"), el("small", "", st));
+    b.disabled = !can; if (can) b.onclick = () => orderCheck(c.lie);
+    f.append(b);
+  });
+  showFolder();
+}
+function startPick(ev){ return chooseClaim(ev); }
+function startPickOld(ev){
+  closeFolder();
+  if (!S.claims.some(c => !c.broken && L(c.lie).who === S.cur)){ addLine("say sys", "まだ証言がない。先に質問を。"); return; }
+  S.picking = ev;
+  $("pickmsg").textContent = `「${ev.name}」をどの証言に？`;
+  $("pickbar").classList.add("on"); $("chips").classList.add("picking");
+}
+function stopPick(){ if (S) S.picking = null; $("pickbar").classList.remove("on"); $("chips").classList.remove("picking"); }
+
+/* ---- 終盤：事件の組み立て ---- */
+function enterFinal(){
+  S.phase = "final"; stopPick();
+  $("ask").classList.add("final");
+}
+function openAsm(){
+  if (!S || S.over || S.busy || S.phase !== "final") return;
+  const f = newFolder("asm chosho");
+  f.append(el("h3", "c", "供述調書"), el("p", "hint", C.asm.intro));
+  const sent = el("p", "sentence"), optBox = el("div", "optbox");
+  const go = el("button", "go", "読み聞かせて、署名を迫る"); go.type = "button";
+  const upd = () => { go.disabled = !S.asm.slots.every(s => S.asm.pick[s.key] != null); };
+  const by = {}, paint = {};
+  S.asm.slots.forEach(s => { by[s.key] = s; });
+  const showOpts = s => {
+    optBox.innerHTML = ""; optBox.append(el("h4", "", s.label));
+    f.querySelectorAll(".blank").forEach(x => x.classList.toggle("cur", x.dataset.k === s.key));
+    s.options.forEach((o, i) => {
+      const b = el("button", "opt" + (S.asm.pick[s.key] === i ? " sel" : ""), o.t); b.type = "button"; b.dataset.k = s.key;
+      b.onclick = () => {
+        S.asm.pick[s.key] = i; paint[s.key](); upd();
+        const nx = S.asm.slots.find(x => S.asm.pick[x.key] == null);
+        if (nx) showOpts(nx); else { optBox.innerHTML = ""; f.querySelectorAll(".blank").forEach(x => x.classList.remove("cur")); }
+      };
+      optBox.append(b);
+    });
+  };
+  C.asm.template.split(/(\{\w+\})/).forEach(part => {
+    const m = part.match(/^\{(\w+)\}$/);
+    if (!m){ if (part) sent.append(document.createTextNode(part)); return; }
+    const s = by[m[1]], b = el("span", "blank"); b.setAttribute("role", "button"); b.tabIndex = 0; b.dataset.k = s.key;
+    b.onkeydown = e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); showOpts(s); } };
+    paint[s.key] = () => { const i = S.asm.pick[s.key]; b.textContent = i != null ? s.options[i].t : "（" + s.label.split("：")[0] + "）"; b.classList.toggle("filled", i != null); };
+    paint[s.key]();
+    b.onclick = () => showOpts(s);
+    sent.append(b);
+  });
+  const d = el("details"); d.append(el("summary", "", "証拠と言質を読み返す"));
+  C.evidence.filter(e => S.owned.has(e.id)).forEach(e => { const p = el("p"); p.append(el("b", "", e.name + "："), document.createTextNode(e.text)); d.append(p); });
+  if (C.multi) [...S.pinned].forEach(id => { const p = el("p"); p.append(el("b", "", SP(L(id).who).nick + "の言質："), document.createTextNode(L(id).pin)); d.append(p); });
+  go.onclick = submitAsm; upd();
+  f.append(sent, optBox, d, go);
+  const first = S.asm.slots.find(x => S.asm.pick[x.key] == null); if (first) showOpts(first);
+  showFolder();
+}
+async function submitAsm(){
+  if (!S || S.busy || S.over || S.phase !== "final") return;
+  const slots = S.asm.slots;
+  const sel = slots.map(s => ({s, o:s.options[S.asm.pick[s.key]]}));
+  if (sel.some(x => !x.o)) return;
+  const nOk = sel.filter(x => x.o.ok).length;
+  closeFolder(); lock(true);
+  if (nOk === slots.length){
+    await cutin("doc", "この調書に、署名しろ。", "sign", "", "自白");
+    return confess();
+  }
+  spend(2); S.mistakes++;
+  addLine("say det", "（調書を読み聞かせる）");
+  cs().hist.push({who:"det", text:"（事件の筋書きを書いた調書を読み聞かせ、署名を迫った）"});
+  const situation = nOk === 0
+    ? "刑事が読み上げた調書は全部間違っている。余裕を取り戻し、「的外れだ」と笑い飛ばす。真相は言わない。"
+    : `刑事が読み上げた調書は、一部だけ当たっている（${nOk}／${slots.length}項目）。内心ぎくりとするが、顔には出さず「全然違う」と否定する。どこが当たっているかは絶対に言わない。`;
+  const job = replyJob(situation);
+  await cutin("doc", "この調書に、署名しろ。", "refuse");
+  const w = addLine("say sus wait", "……");
+  const res = await job;
+  w.remove();
+  sayReply(res, "calm");
+  addLine("say sys", `合っているのは ${nOk}／${slots.length}`);
+  setStress(cs().stress - 6); setFace("calm");
+  afterAction();
+}
+async function confess(){
+  S.over = true; lock(true);
+  const cul = C.suspects.filter(s => s.culprit);
+  if (!sus().culprit && cul.length){ S.cur = cul[0].id; enterRoom(); renderTabs(); }
+  const sp = sus();
+  setStress(100); setFace("broken", true); swingLamp();
+  $("suspect").classList.add("fallen");
+  const w = addLine("say sus wait", "……");
+  let text = C.confessFallback;
+  const others = cul.filter(s => s.id !== sp.id).map(s => s.nick);
+  try{
+    const r = await sample(`${sp.persona}
+${sp.truth}
+
+これまでのやりとり：
+${histText()}
+
+最後の嘘が崩れ、刑事が読み上げた調書（${slotsText()}）も、すべて当たっていた。${sp.nick}は観念して自白する。${others.length ? `共犯の${others.join("・")}のことも隠さずに話す。` : ""}真相に沿って、動機、${C.when}に何があったか、いまの気持ちを、${sp.nick}の一人語りで${C.confessLen}で話す。台詞だけを書く。`, {modelTier:"quick", cache:false});
+    if (r && r.text && r.text.trim()) text = r.text.trim();
+  }catch(e){}
+  let yomi = null;
+  try{
+    const yj = await sample.json(`次の文の読みをJSONだけで返す（前置き・コードブロック禁止）：{"yomi":"全文をひらがなの読みに直したもの（漢字は使わない。句読点はそのまま。文脈に合う読みを選ぶこと。例：「行ったことある」は「いったことある」と読む）"}
+文：${text}`, {modelTier:"quick", cache:false});
+    if (yj && yj.yomi) yomi = String(yj.yomi);
+  }catch(e){}
+  w.remove();
+  const line = addLine("say sus", text, {slow:true, yomi});
+  await Promise.race([line._typed, sleep(16000)]);
+  await sleep(1300);
+  ending("win", text);
+}
+function slotsText(){ return C.asm.slots.map(s => s.label.split("：")[0]).join("・"); }
+
+/* ---- 結末 ---- */
+function rank(){
+  const t = S.turn, m = S.mistakes, mx = maxT();
+  if (t <= mx * 0.67 && m <= 1) return {r:"S", t:"名刑事"};
+  if (t <= mx * 0.84 && m <= 4) return {r:"A", t:"敏腕"};
+  return {r:"B", t:"一人前"};
+}
+function clears(){ try { return JSON.parse(localStorage.getItem("itg_clear") || "{}"); } catch(e){ return {}; } }
+function saveClear(id, r){
+  try { const c = clears(), order = "BAS"; if (!c[id] || order.indexOf(r) > order.indexOf(c[id])) c[id] = r; localStorage.setItem("itg_clear", JSON.stringify(c)); } catch(e){}
+}
+function ending(kind, text){
+  S.over = true; clearTimeout(beatT); ambSet(); stopSpeak();
+  const c = $("cover"); c.className = "cover"; c.innerHTML = "";
+  const used = S.turn * perT(), tm = `${Math.floor(used / 60)}時間${used % 60}分`;
+  const total = Object.keys(C.lies).length, win = kind === "win";
+  const pp = el("div", "paper");
+  pp.append(el("p", "p-head", win ? "供述調書" : "取調べ記録"), el("p", "p-case", C.label));
+  if (win){
+    const rk = rank(); saveClear(C.id, rk.r);
+    const cul = C.suspects.filter(s => s.culprit).map(s => s.name).join("・");
+    const sign = el("p", "p-sign", "供述人　" + cul); sign.append(el("span", "thumb"));
+    const hk = el("div", "hanko"); hk.append(el("b", "", rk.r), el("span", "", rk.t));
+    pp.append(el("p", "p-body", text), sign, el("p", "p-stats", `所要 ${tm}／崩した嘘 ${S.broken.size}／空振り ${S.mistakes}`), hk, el("div", "p-stamp", "自白"));
+    sfx.door();
+  } else {
+    pp.append(el("p", "p-body", kind === "walk" ? C.walkEnd : C.timeLine),
+              el("p", "p-stats", `崩した嘘 ${S.broken.size}／${total}。先に言質、それから証拠。`), el("div", "p-stamp gray", "釈放"));
+  }
+  c.append(pp);
+  const b = el("button", "start", "事件ファイルへ戻る"); b.type = "button"; b.onclick = () => { try { sessionStorage.setItem("itg_files", "1"); } catch(e){} location.reload(); };
+  c.append(b);
+}
+
+/* ---- 表紙と開始 ---- */
+const VERSION = "1.0";
+function renderTitle(){
+  const c = $("cover"); c.className = "title"; c.innerHTML = "";
+  const lamp = el("div", "tlamp"); lamp.append(el("i"), el("b"));
+  const logo = el("h1", "logo"); logo.append(document.createTextNode("完"), el("span", "", "落"), document.createTextNode("ち"), el("div", "seal", "自白"));
+  const b1 = el("button", "tb", "事件ファイル"); b1.type = "button"; b1.onclick = () => { primeSpeech(); ctx(); renderCover(); };
+  const b2 = el("button", "tb sub", "取調べの心得"); b2.type = "button"; b2.onclick = renderHow;
+  c.append(lamp, el("p", "kicker", "取調室の刑事"), logo, el("p", "tag", "言質を取れ。証拠で崩せ。"), b1, b2, el("p", "ver", "ver " + VERSION + "　容疑者はAIが演じます"));
+}
+function renderHow(){
+  const c = $("cover"); c.className = "cover how"; c.innerHTML = "";
+  c.append(el("p", "sub", "完落ち"), el("h1", "", "取調べの心得"));
+  const br = el("div", "brief");
+  const step = (icon, t, d) => { const s = el("div", "step"), n = el("div", "n"), x = el("div"); n.innerHTML = iconSVG(icon); x.append(el("b", "", t), el("span", "", d)); s.append(n, x); return s; };
+  br.append(step("person", "一、喋らせる", "質問すると、相手の言い分が「証言メモ」に残る。"),
+            step("talk", "二、言質を取る", "あいまいな証言は言い逃れされる。「いつ・どこ・何回」を言い切らせると、錠前が赤くなる。"),
+            step("cctv", "三、証拠を突きつける", "証言をタップして、矛盾する証拠を選ぶ。決まれば錠前が砕ける。"),
+            step("doc", "四、調書に署名させる", "嘘をすべて崩したら、空欄を埋めて事件の筋書きを完成させる。"));
+  br.append(el("h2", "", "刑事の手札"),
+            step("vial", "裏取り", "言質を取った証言を部下に調べさせる。新しい証拠が2手後に届く。"),
+            step("watch", "黙って待つ・机を叩く", "追い詰めていれば、相手が自分から口を滑らせる。机は3回叩くと弁護士を呼ばれる。"),
+            step("katsudon", "カツ丼", "情に訴える。一人に一杯だけ。追い詰めてから出すこと。"));
+  c.append(br);
+  const back = el("button", "start", "戻る"); back.type = "button"; back.onclick = renderTitle;
+  c.append(back);
+}
+function renderCover(){
+  const c = $("cover"); c.className = "cover"; c.innerHTML = "";
+  const done0 = clears(), nDone = CASES.filter(x => done0[x.id]).length;
+  c.append(el("p", "sub", "完落ち"), el("h1", "", "事件ファイル"), el("p", "count", nDone === CASES.length ? "全事件解決。お見事。" : `解決 ${nDone}／${CASES.length}`));
+  const list = el("div", "cases"), done = done0;
+  CASES.forEach((cs0, n) => {
+    const cs = norm(cs0);
+    const b = el("button", "case-card"); b.type = "button";
+    const th = el("div", "th"); th.innerHTML = faceThumb(cs.suspects[0].face, "t" + n);
+    const tx = el("div", "tx");
+    tx.append(el("span", "no", "FILE " + String(n + 1).padStart(2, "0")), el("b", "", cs.label), el("span", "stars", "★".repeat(cs.stars || 1) + "☆".repeat(5 - (cs.stars || 1))), el("span", "", cs.summary));
+    b.append(th, tx);
+    if (done[cs.id]) b.append(el("span", "done", "解決 " + done[cs.id]));
+    b.onclick = () => renderBrief(cs);
+    list.append(b);
+  });
+  c.append(list);
+  const back = el("button", "back", "タイトルへ"); back.type = "button"; back.onclick = renderTitle;
+  c.append(back);
+}
+async function playIntro(){
+  if (FAST) return;
+  const o = $("intro"); o.className = "intro on"; o.innerHTML = "";
+  let skip = false; o.onclick = () => { skip = true; };
+  const lines = [C.startLine.replace(" 取調べ開始", ""), "取調室", "容疑者　" + C.suspects.map(s => s.name).join("・")];
+  for (const t of lines){
+    const p = el("p", "", ""); o.append(p);
+    for (let i = 1; i <= t.length && !skip; i++){ p.textContent = t.slice(0, i); if (i % 2) sfx.type(); await sleep(48); }
+    p.textContent = t;
+    if (!skip) await sleep(360);
+  }
+  sfx.door(); o.classList.add("out");
+  await sleep(skip ? 200 : 650);
+  o.className = "intro"; o.innerHTML = ""; o.onclick = null;
+}
+function renderBrief(cs){
+  C = cs;
+  const c = $("cover"); c.className = "cover"; c.innerHTML = "";
+  c.append(el("p", "sub", "FILE " + String(CASES.indexOf(cs) + 1).padStart(2, "0")), el("h1", "", cs.label));
+  const br = el("div", "brief");
+  cs.brief.forEach(t => br.append(el("p", "", t)));
+  const hrs = Math.round(maxT() * perT() / 60);
+  br.append(el("p", "note", `持ち時間${hrs}時間。言い切らせて言質を取り、証拠を突きつけろ。`));
+  if (cs.multi) br.append(el("p", "note", "上の名前で部屋を移れる。ある人の言質は、別の人への証拠になる。"));
+  c.append(br);
+  const go = el("button", "start", "取調べを始める"); go.type = "button"; go.onclick = () => { primeSpeech(); startCase(cs); };
+  const back = el("button", "back", "事件を選び直す"); back.type = "button"; back.onclick = renderCover;
+  c.append(go, back);
+}
+async function startCase(cs){
+  C = norm(cs); S = newState();
+  $("cover").className = "cover hide";
+  $("ask").classList.remove("final"); $("suspect").classList.remove("fallen");
+  $("casetitle").textContent = C.label;
+  document.title = "完落ち — " + C.label;
+  $("log").innerHTML = ""; $("chips").innerHTML = ""; $("trophies").innerHTML = "";
+  S.tutOff = !C.tut ? true : (C.alwaysTut ? false : tutSeen());
+  clock(); lock(true);
+  const svg = $("face"); svg.innerHTML = faceMarkup(sus().face); $("hands").innerHTML = handsMarkup(sus().face);
+  setStress(cs0stress()); setFace("calm"); renderLocks(); renderTabs();
+  ambStart();
+  await playIntro();
+  lock(false);
+  addLine("say sys", C.startLine);
+  enterRoom();
+  if (!sample) addLine("say sys", errMsg({code:"unavailable"}));
+  renderChips(); renderQuick(); updateHint(); updateEvDot(); renderTabs(); renderLocks();
+  beatLoop();
+}
+const cs0stress = () => cs().stress;
+
+function openLog(){
+  if (!S) return;
+  const f = newFolder(); f.append(el("h3", "", "取調べの記録"));
+  [...$("log").children].forEach(x => { if (!x.classList.contains("wait")) f.append(el("p", "hint", x.textContent)); });
+  showFolder(); f.scrollTop = 1e9;
+}
+/* ---- 配線 ---- */
+$("sheet").onclick = e => { if (e.target.id === "sheet") closeFolder(); };
+$("pickcancel").onclick = stopPick;
+$("evbtn").onclick = openEv;
+$("logbtn").onclick = openLog;
+$("chkbtn").onclick = openChk;
+$("finalbtn").onclick = openAsm;
+$("hintx").onclick = () => { if (!S) return; S.tutOff = true; tutSave(); updateHint(); };
+$("send").onclick = () => { const v = $("q").value; $("q").value = ""; ask(v); };
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && !e.isComposing){ e.preventDefault(); $("send").click(); } });
+document.addEventListener("pointerdown", () => { ctx(); unlockSpeech(); if (S && !S.over) ambStart(); }, {capture:true, passive:true});
+$("voice").onclick = () => { voiceOn = !voiceOn; if (!voiceOn) stopSpeak(); updateVoiceBtn(); };
+$("snd").onclick = () => { snd = !snd; $("snd").textContent = snd ? "音 ON" : "音 OFF"; if (snd){ ctx(); ambStart(); } ambSet(); };
+// ---- Groq版 sample（プロキシ優先、予備に自分のキーで直接） ----
+function proxyAvailable(){ return location.protocol.indexOf("http")===0 && (location.hostname.slice(-9)==="pages.dev"||location.hostname==="localhost"||location.hostname==="127.0.0.1"); }
+function groqKey(){ try{ return localStorage.getItem("groq-api-key")||""; }catch(e){ return ""; } }
+const GROQ_MODELS=["qwen/qwen3.8-27b","openai/gpt-oss-20b","openai/gpt-oss-120b"];
+async function proxyText(prompt, opts){
+  const res=await fetch("/api/groq",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt}),signal:opts&&opts.signal});
+  if(res.status===429) throw {code:"rate_limited"};
+  if(res.status===401||res.status===403) throw {code:"not_granted"};
+  if(!res.ok) throw {code:"unavailable"};
+  const data=await res.json(); if(!data||!data.text) throw {code:"unavailable"};
+  return data.text;
+}
+async function directText(prompt, opts){
+  const key=groqKey(); if(!key) throw {code:"unavailable"};
+  for(const model of GROQ_MODELS){
+    try{
+      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({model,messages:[{role:"user",content:prompt}],temperature:0.8,max_tokens:1000}),signal:opts&&opts.signal});
+      if(res.status===429) throw {code:"rate_limited"};
+      if(res.status===401||res.status===403) throw {code:"not_granted"};
+      if(!res.ok) continue;
+      const data=await res.json();
+      const text=data&&data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content;
+      if(text) return text;
+    }catch(e){ if(e&&e.code) throw e; }
+  }
+  throw {code:"unavailable"};
+}
+async function aiText(prompt, opts){
+  if(proxyAvailable()){
+    try{ return await proxyText(prompt, opts); }
+    catch(e){ if(e&&(e.code==="rate_limited"||e.code==="not_granted")) throw e; }
+  }
+  return directText(prompt, opts);
+}
+function makeSample(){
+  const fn=async (prompt, opts)=>({text: await aiText(prompt, opts)});
+  fn.json=async (prompt, opts)=>{
+    const text=await aiText(prompt, opts);
+    const a=text.indexOf("{"), b=text.lastIndexOf("}");
+    if(a<0||b<0) throw {code:"unavailable"};
+    return JSON.parse(text.slice(a, b+1));
+  };
+  return fn;
+}
+sample = makeSample();
+tts = null; // 読み上げは端末標準の音声合成を使う
+updateVoiceBtn();
+updateVoiceBtn();
+(() => { let files = false; try { files = sessionStorage.getItem("itg_files") === "1"; sessionStorage.removeItem("itg_files"); } catch(e){} if (files) renderCover(); else renderTitle(); })();
+</script>
+</body>
+</html>
